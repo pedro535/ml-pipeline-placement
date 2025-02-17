@@ -45,7 +45,7 @@ if [ $option == "upload" ]; then
     delete_hidden_files
     zip_dataset
     upload
-elif [ $option == "rm" ]; then
+elif [ $option == "remove" ]; then
     remove
 else
     echo "Invalid option. Please use 'upload' or 'download'"
