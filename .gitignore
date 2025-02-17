@@ -1,5 +1,12 @@
 # Datasets
-data/**/*.csv
+data/heart_disease/heart.csv
+data/traffic_signs/Meta/
+data/traffic_signs/Train/
+data/traffic_signs/Test/
+data/traffic_signs/Meta.csv
+data/traffic_signs/Test.csv
+data/traffic_signs/Train.csv
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
