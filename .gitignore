@@ -1,11 +1,11 @@
 # Datasets
 data/heart_disease/heart.csv
-data/traffic_signs/Meta/
-data/traffic_signs/Train/
-data/traffic_signs/Test/
-data/traffic_signs/Meta.csv
-data/traffic_signs/Test.csv
-data/traffic_signs/Train.csv
+data/german_traffic_signs/Meta/
+data/german_traffic_signs/Train/
+data/german_traffic_signs/Test/
+data/german_traffic_signs/Meta.csv
+data/german_traffic_signs/Test.csv
+data/german_traffic_signs/Train.csv
 
 
 # Byte-compiled / optimized / DLL files
