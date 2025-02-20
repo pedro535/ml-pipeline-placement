@@ -1,0 +1,347 @@
+# PIPELINE DEFINITION
+# Name: german-traffic-signs-pipeline
+# Description: Pipeline that loads the German Traffic Signs dataset, trains a model, and evaluates it.
+# Inputs:
+#    batch_size: int
+#    dataset_path: str
+#    epochs: int
+# Outputs:
+#    Output: dict
+components:
+  comp-data-collection:
+    executorLabel: exec-data-collection
+    inputDefinitions:
+      parameters:
+        dataset_path:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        X_test_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        X_train_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        X_val_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        y_test_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        y_train_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        y_val_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-model-evaluation:
+    executorLabel: exec-model-evaluation
+    inputDefinitions:
+      artifacts:
+        X_test_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        model_artifact:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        y_test_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRUCT
+  comp-model-training:
+    executorLabel: exec-model-training
+    inputDefinitions:
+      artifacts:
+        X_train_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        X_val_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        y_train_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        y_val_ds:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        batch_size:
+          parameterType: NUMBER_INTEGER
+        epochs:
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        model_artifact:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-data-collection:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - data_collection
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.11.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef data_collection(\n    dataset_path: str,\n    X_train_ds: Output[Dataset],\n\
+          \    X_val_ds: Output[Dataset],\n    X_test_ds: Output[Dataset],\n    y_train_ds:\
+          \ Output[Dataset],\n    y_val_ds: Output[Dataset],\n    y_test_ds: Output[Dataset]\n\
+          ):\n    import os\n    import numpy as np\n    import pandas as pd\n   \
+          \ from PIL import Image\n    from sklearn.model_selection import train_test_split\n\
+          \    from tensorflow.keras.utils import to_categorical\n\n    def npy_save(data,\
+          \ path):\n        with open(path, \"wb\") as f:\n            np.save(f,\
+          \ data)\n\n\n    # Load train and validation data\n    data = []\n    labels\
+          \ = []\n    classes = 43\n\n    for i in range(classes):\n        path =\
+          \ os.path.join(dataset_path, \"Train\", str(i))\n        images = os.listdir(path)\n\
+          \n        for a in images:\n            try:\n                image = Image.open(os.path.join(path,\
+          \ a))\n                image = image.resize((30, 30))\n                image\
+          \ = np.array(image) / 255\n                data.append(image)\n        \
+          \        labels.append(i)\n            except Exception:\n             \
+          \   print(\"Error loading image\")\n\n    data = np.array(data)\n    labels\
+          \ = np.array(labels)\n\n    X_train, X_val, y_train, y_val = train_test_split(data,\
+          \ labels, test_size=0.2, random_state=42)\n    y_train = to_categorical(y_train,\
+          \ classes)\n    y_val = to_categorical(y_val, classes)\n\n    # Load test\
+          \ data\n    test_details = pd.read_csv(f\"{dataset_path}/Test.csv\")\n\n\
+          \    data = []\n    imgs = test_details[\"Path\"].values\n    labels = test_details[\"\
+          ClassId\"].values\n\n    for img in imgs:\n        image = Image.open(f\"\
+          {dataset_path}/{img}\")\n        image = image.resize([30, 30])\n      \
+          \  image = np.array(image) / 255\n        data.append(image)\n\n    X_test\
+          \ = np.array(data)\n    y_test = np.array(labels)\n\n    # Save data as\
+          \ artifacts\n    npy_save(X_train, X_train_ds.path)\n    npy_save(y_train,\
+          \ y_train_ds.path)\n    npy_save(X_val, X_val_ds.path)\n    npy_save(y_val,\
+          \ y_val_ds.path)\n    npy_save(X_test, X_test_ds.path)\n    npy_save(y_test,\
+          \ y_test_ds.path)\n    print(\"Data saved as artifacts\")\n\n"
+        image: registry.localhost/python_kfp:v3
+    exec-model-evaluation:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - model_evaluation
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.11.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef model_evaluation(\n    model_artifact: Input[Model],\n    X_test_ds:\
+          \ Input[Dataset],\n    y_test_ds: Input[Dataset]\n) -> Dict[str, float]:\n\
+          \n    import numpy as np\n    import pandas as pd\n    from PIL import Image\n\
+          \    import tensorflow as tf\n    from tensorflow import keras\n    from\
+          \ sklearn.metrics import f1_score, accuracy_score\n\n    device = \"/GPU:0\"\
+          \ if tf.config.list_physical_devices(\"GPU\") else \"/CPU:0\"\n\n\n    #\
+          \ Load data\n    X_test = np.load(X_test_ds.path)\n    y_test = np.load(y_test_ds.path)\n\
+          \n    # Load model\n    model = keras.models.load_model(model_artifact.path\
+          \ + \"/model.h5\")\n\n    # Evaluate model\n    with tf.device(device):\n\
+          \        preds = np.argmax(model.predict(X_test), axis=-1)\n\n    metrics\
+          \ = {\n        \"accuracy\": accuracy_score(y_test, preds),\n        \"\
+          f1_score\": f1_score(y_test, preds, average=\"weighted\")\n    }\n\n   \
+          \ print(\"=\" * 20)\n    print(f\"Accuracy: {metrics[\"accuracy\"]}\")\n\
+          \    print(f\"F1 Score: {metrics[\"f1_score\"]}\")\n    print(\"=\" * 20)\n\
+          \n    return metrics\n\n"
+        image: registry.localhost/python_kfp:v3
+    exec-model-training:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - model_training
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.11.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef model_training(\n    X_train_ds: Input[Dataset],\n    X_val_ds:\
+          \ Input[Dataset],\n    y_train_ds: Input[Dataset],\n    y_val_ds: Input[Dataset],\n\
+          \    model_artifact: Output[Model],\n    epochs: int,\n    batch_size: int\n\
+          ):\n    import numpy as np\n    import tensorflow as tf\n    from tensorflow.keras.models\
+          \ import Sequential\n    from tensorflow.keras.layers import Input, Conv2D,\
+          \ MaxPool2D, Dense, Flatten, Dropout\n\n    device = \"/GPU:0\" if tf.config.list_physical_devices(\"\
+          GPU\") else \"/CPU:0\"\n\n\n    # Load data\n    X_train = np.load(X_train_ds.path)\n\
+          \    X_val = np.load(X_val_ds.path)\n    y_train = np.load(y_train_ds.path)\n\
+          \    y_val = np.load(y_val_ds.path)\n\n    #  Build model\n    model = Sequential([\n\
+          \        Input(shape=(X_train.shape[1:])),\n        Conv2D(filters=32, kernel_size=(5,\
+          \ 5), activation=\"relu\"),\n        Conv2D(filters=64, kernel_size=(5,\
+          \ 5), activation=\"relu\"),\n        MaxPool2D(pool_size=(2, 2)),\n    \
+          \    Dropout(rate=0.15),\n        Conv2D(filters=128, kernel_size=(3, 3),\
+          \ activation=\"relu\"),\n        Conv2D(filters=256, kernel_size=(3, 3),\
+          \ activation=\"relu\"),\n        MaxPool2D(pool_size=(2, 2)),\n        Dropout(rate=0.20),\n\
+          \        Flatten(),\n        Dense(512, activation=\"relu\"),\n        Dropout(rate=0.25),\n\
+          \        Dense(43, activation=\"softmax\")\n    ])\n\n    model.compile(\n\
+          \        loss = \"categorical_crossentropy\",\n        optimizer = \"adam\"\
+          ,\n        metrics = [\"accuracy\"]\n    )\n\n    # Train Model\n    with\
+          \ tf.device(device):\n        model.fit(\n            X_train,\n       \
+          \     y_train,\n            batch_size = batch_size,\n            epochs\
+          \ = epochs,\n            validation_data = (X_val, y_val),\n           \
+          \ verbose = 2\n        )\n\n    # Save model\n    model.save(model_artifact.path\
+          \ + \"/model.h5\")\n    print(f\"Model saved to {model_artifact.path}\"\
+          )\n\n"
+        image: registry.localhost/python_kfp:v3
+pipelineInfo:
+  description: Pipeline that loads the German Traffic Signs dataset, trains a model,
+    and evaluates it.
+  name: german-traffic-signs-pipeline
+root:
+  dag:
+    outputs:
+      parameters:
+        Output:
+          valueFromParameter:
+            outputParameterKey: Output
+            producerSubtask: model-evaluation
+    tasks:
+      data-collection:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-data-collection
+        inputs:
+          parameters:
+            dataset_path:
+              componentInputParameter: dataset_path
+        taskInfo:
+          name: data-collection
+      model-evaluation:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-model-evaluation
+        dependentTasks:
+        - data-collection
+        - model-training
+        inputs:
+          artifacts:
+            X_test_ds:
+              taskOutputArtifact:
+                outputArtifactKey: X_test_ds
+                producerTask: data-collection
+            model_artifact:
+              taskOutputArtifact:
+                outputArtifactKey: model_artifact
+                producerTask: model-training
+            y_test_ds:
+              taskOutputArtifact:
+                outputArtifactKey: y_test_ds
+                producerTask: data-collection
+        taskInfo:
+          name: model-evaluation
+      model-training:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-model-training
+        dependentTasks:
+        - data-collection
+        inputs:
+          artifacts:
+            X_train_ds:
+              taskOutputArtifact:
+                outputArtifactKey: X_train_ds
+                producerTask: data-collection
+            X_val_ds:
+              taskOutputArtifact:
+                outputArtifactKey: X_val_ds
+                producerTask: data-collection
+            y_train_ds:
+              taskOutputArtifact:
+                outputArtifactKey: y_train_ds
+                producerTask: data-collection
+            y_val_ds:
+              taskOutputArtifact:
+                outputArtifactKey: y_val_ds
+                producerTask: data-collection
+          parameters:
+            batch_size:
+              componentInputParameter: batch_size
+            epochs:
+              componentInputParameter: epochs
+        taskInfo:
+          name: model-training
+  inputDefinitions:
+    parameters:
+      batch_size:
+        parameterType: NUMBER_INTEGER
+      dataset_path:
+        parameterType: STRING
+      epochs:
+        parameterType: NUMBER_INTEGER
+  outputDefinitions:
+    parameters:
+      Output:
+        parameterType: STRUCT
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.11.0
+---
+platforms:
+  kubernetes:
+    deploymentSpec:
+      executors:
+        exec-data-collection:
+          pvcMount:
+          - constant: datasets-pvc
+            mountPath: /mnt/datasets
