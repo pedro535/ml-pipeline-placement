@@ -1,0 +1,123 @@
+# PIPELINE DEFINITION
+# Name: test-2-pipeline
+# Inputs:
+#    pvc_name: str
+components:
+  comp-load-model:
+    executorLabel: exec-load-model
+    inputDefinitions:
+      artifacts:
+        ml_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+  comp-save-model:
+    executorLabel: exec-save-model
+    outputDefinitions:
+      artifacts:
+        ml_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-load-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - load_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.11.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef load_model(ml_model : Input[Model]):\n    from tensorflow import\
+          \ keras\n    import tensorflow as tf\n    import os\n\n    model = keras.models.load_model(ml_model.path\
+          \ + \"/model.h5\")\n    print(model.summary())\n\n"
+        image: registry.localhost/python_kfp:v3
+    exec-save-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - save_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.11.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef save_model(ml_model : Output[Model]):\n    '''\n    Define the\
+          \ model architecture\n    This way it's more simple to change the model\
+          \ architecture and all the steps and indipendent\n    '''\n    from tensorflow\
+          \ import keras\n    import tensorflow as tf\n    import os\n\n    #model\
+          \ definition\n    model = keras.models.Sequential()\n    model.add(keras.layers.Conv2D(64,\
+          \ (3, 3), activation='relu', input_shape=(28,28,1)))\n    model.add(keras.layers.MaxPool2D(2,\
+          \ 2))\n\n    model.add(keras.layers.Flatten())\n    model.add(keras.layers.Dense(64,\
+          \ activation='relu'))\n    model.add(keras.layers.Dense(32, activation='relu'))\n\
+          \n    model.add(keras.layers.Dense(10, activation='softmax'))\n\n    #saving\
+          \ model\n    model.save(ml_model.path + \"/model.h5\")\n\n"
+        image: registry.localhost/python_kfp:v3
+pipelineInfo:
+  name: test-2-pipeline
+root:
+  dag:
+    tasks:
+      load-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-model
+        dependentTasks:
+        - save-model
+        inputs:
+          artifacts:
+            ml_model:
+              taskOutputArtifact:
+                outputArtifactKey: ml_model
+                producerTask: save-model
+        taskInfo:
+          name: load-model
+      save-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-save-model
+        taskInfo:
+          name: save-model
+  inputDefinitions:
+    parameters:
+      pvc_name:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.11.0
