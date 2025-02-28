@@ -15,15 +15,15 @@ class Component:
     def __init__(self, image, func, args):
         self.image = image
         self.func = func
-        self.args = args
+        self.user_args = args
         self.name = func.__name__
         self.file = None
         self.tree = None
-        self.all_args = {}
+        self.arg_types = {}
 
         self.get_source_file()
         self.get_tree()
-        self.get_all_args()
+        self.get_arg_types()
         
 
     def get_source_file(self):
@@ -43,12 +43,12 @@ class Component:
         self.tree = tree
 
 
-    def get_all_args(self):
+    def get_arg_types(self):
         """
         Get all arguments of the function
         """
         for arg_name, arg_type in self.func.__annotations__.items():
-            self.all_args[arg_name] = arg_type.__name__
+            self.arg_types[arg_name] = arg_type.__name__
 
     
     def remove_type_imports(self):
@@ -68,7 +68,7 @@ class Component:
         Get modules and names to import
         """
         imports = {}
-        for arg_type in self.all_args.values():
+        for arg_type in self.arg_types.values():
             if arg_type not in IMPORTS_MAPPING:
                 continue
             module, names = IMPORTS_MAPPING[arg_type]
