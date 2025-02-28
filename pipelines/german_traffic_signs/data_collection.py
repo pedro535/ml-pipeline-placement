@@ -1,5 +1,9 @@
-from artifacts import OutputDataset
-from artifacts import InputDataset
+#### For development purposes only ####
+import sys
+sys.path.append("../../")
+#######################################
+
+from src.pipeline.artifacts import OutputDataset
 from typing import List
 
 def data_collection(

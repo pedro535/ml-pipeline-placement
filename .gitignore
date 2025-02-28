@@ -7,6 +7,9 @@ data/german_traffic_signs/Meta.csv
 data/german_traffic_signs/Test.csv
 data/german_traffic_signs/Train.csv
 
+# Others
+temp/
+tests/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
