@@ -1,6 +1,7 @@
 class OutputDataset:
     """Marker type for output datasets."""
 
+
 class InputDataset:
     """Marker type for input datasets."""
 
