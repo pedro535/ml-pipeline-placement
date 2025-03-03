@@ -20,6 +20,7 @@ class Component:
         self.file = None
         self.tree = None
         self.arg_types = {}
+        self.volumes = []
 
         self.get_source_file()
         self.get_tree()
@@ -49,6 +50,13 @@ class Component:
         """
         for arg_name, arg_type in self.func.__annotations__.items():
             self.arg_types[arg_name] = arg_type.__name__
+
+
+    def mount_volume(self, pvc, mount_path):
+        """
+        Mount a volume to a component
+        """
+        self.volumes.append((pvc, mount_path))
 
     
     def remove_type_imports(self):

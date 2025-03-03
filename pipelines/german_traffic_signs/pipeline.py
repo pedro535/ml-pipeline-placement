@@ -19,6 +19,11 @@ component_1 = Component(
     }
 )
 
+component_1.mount_volume(
+    pvc="datasets-pvc",
+    mount_path="/mnt/datasets"
+)
+
 component_2 = Component(
     image=BASE_IMAGE, 
     func=model_training,

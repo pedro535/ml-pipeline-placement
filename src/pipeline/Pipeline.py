@@ -65,6 +65,15 @@ class Pipeline:
         )
         self.tree.body.append(node)
 
+        # Import mount_pvc and add_node_selector functions
+        imports = ["mount_pvc", "add_node_selector"]
+        node = ast.ImportFrom(
+            module="kfp.kubernetes",
+            names=[ast.alias(name=name, asname=None) for name in imports],
+            level=0,
+        )
+        self.tree.body.append(node)
+
 
     def create_function(self):
         """
@@ -94,6 +103,27 @@ class Pipeline:
                 ],
             )
         ]
+
+
+    def mount_volumes(self, component, func_node):
+        """
+        Mount volumes to the component
+        """
+        for pvc, mount_path in component.volumes:
+            invoke_node = ast.Call(
+                func=ast.Name(id="mount_pvc", ctx=ast.Load()),
+                args=[],
+                keywords=[
+                    ast.keyword(arg="task", value=ast.Name(id=f"{component.name}_task", ctx=ast.Load())),
+                    ast.keyword(arg="pvc_name", value=ast.Constant(value=pvc)),
+                    ast.keyword(arg="mount_path", value=ast.Constant(value=mount_path))
+                ],
+            )
+            node = ast.Assign(
+                targets=[ast.Name(id=f"{component.name}_task", ctx=ast.Store())],
+                value=invoke_node,
+            )
+            func_node.body.append(node)
 
 
     def call_components(self, func_node):
@@ -126,7 +156,8 @@ class Pipeline:
                     ],
                 ),
             )
-            func_node.body.append(node)                 
+            func_node.body.append(node)
+            self.mount_volumes(component, func_node)         
 
 
     def build_pipeline(self, pipeline_id):
