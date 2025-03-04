@@ -113,9 +113,18 @@ class Pipeline:
                 func=ast.Name(id="mount_pvc", ctx=ast.Load()),
                 args=[],
                 keywords=[
-                    ast.keyword(arg="task", value=ast.Name(id=f"{component.name}_task", ctx=ast.Load())),
-                    ast.keyword(arg="pvc_name", value=ast.Constant(value=pvc)),
-                    ast.keyword(arg="mount_path", value=ast.Constant(value=mount_path))
+                    ast.keyword(
+                        arg="task",
+                        value=ast.Name(id=f"{component.name}_task", ctx=ast.Load())
+                    ),
+                    ast.keyword(
+                        arg="pvc_name",
+                        value=ast.Constant(value=pvc)
+                    ),
+                    ast.keyword(
+                        arg="mount_path",
+                        value=ast.Constant(value=mount_path)
+                    )
                 ],
             )
             node = ast.Assign(
@@ -190,15 +199,28 @@ class Pipeline:
                 ),
                 args=[],
                 keywords=[
-                    ast.keyword(arg="pipeline_func", value=ast.Name(id=self.func_name, ctx=ast.Load())),
-                    ast.keyword(arg="enable_caching", value=ast.Constant(value=enable_caching))
+                    ast.keyword(
+                        arg="pipeline_func",
+                        value=ast.Name(id=self.func_name, ctx=ast.Load())
+                    ),
+                    ast.keyword(
+                        arg="enable_caching",
+                        value=ast.Constant(value=enable_caching)
+                    )
                 ],
             ),
         )
         print_node = ast.Expr(
             value=ast.Call(
                 func=ast.Name(id="print", ctx=ast.Load()),
-                args=[ast.Constant(value="Run ID: "), ast.Attribute(value=ast.Name(id="run", ctx=ast.Load()), attr="run_id", ctx=ast.Load())],
+                args=[
+                    ast.Constant(value="Run ID: "),
+                    ast.Attribute(
+                        value=ast.Name(id="run", ctx=ast.Load()),
+                        attr="run_id",
+                        ctx=ast.Load()
+                    )
+                ],
                 keywords=[],
             )
         )
