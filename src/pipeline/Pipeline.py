@@ -1,6 +1,5 @@
 from pathlib import Path
 import uuid
-import inspect
 import ast
 import astor
 import black
@@ -9,14 +8,19 @@ from typing import List
 from src.pipeline import Component
 from src.pipeline.consts import (
     IMPORTS_MAPPING,
-    KFP_PIPELINE_DECORATOR
+    KFP_PIPELINE_DECORATOR,
+    PIPELINE_IMPORTS
 )
 
+# TODO: pass the following vars as arguments
+kfp_host = "http://localhost:3000"
+enable_caching = False
 
 class Pipeline:
 
     def __init__(self, name):
         self.name = name
+        self.func_name = name.replace(" ", "_").lower()
         self.components = []
         self.artifacts = {}  # {output_artifact_name: producer_component_name}
         self.tree = None
@@ -47,6 +51,19 @@ class Pipeline:
         """
         Add imports to the pipeline file
         """
+        imports = {}
+        for name in PIPELINE_IMPORTS:
+            module, names = IMPORTS_MAPPING[name]
+            imports[module] = imports.get(module, []) + names
+        
+        for module, names in imports.items():
+            node = ast.ImportFrom(
+                module=module,
+                names=[ast.alias(name=name, asname=None) for name in names],
+                level=0,
+            )
+            self.tree.body.append(node)
+
         # Compiled components
         for component in self.components:
             node = ast.ImportFrom(
@@ -56,31 +73,13 @@ class Pipeline:
             )
             self.tree.body.append(node)
 
-        # Pipeline decorator
-        module, names = IMPORTS_MAPPING[KFP_PIPELINE_DECORATOR]
-        node = ast.ImportFrom(
-            module=module,
-            names=[ast.alias(name=name, asname=None) for name in names],
-            level=0,
-        )
-        self.tree.body.append(node)
-
-        # Import mount_pvc and add_node_selector functions
-        imports = ["mount_pvc", "add_node_selector"]
-        node = ast.ImportFrom(
-            module="kfp.kubernetes",
-            names=[ast.alias(name=name, asname=None) for name in imports],
-            level=0,
-        )
-        self.tree.body.append(node)
-
 
     def create_function(self):
         """
         Create the pipeline function
         """
         node = ast.FunctionDef(
-            name="kfp_pipeline",
+            name=self.func_name,
             args=ast.arguments(
                 args=[],
                 defaults=[],
@@ -157,7 +156,53 @@ class Pipeline:
                 ),
             )
             func_node.body.append(node)
-            self.mount_volumes(component, func_node)         
+            self.mount_volumes(component, func_node)
+
+    
+    def create_client(self):
+        """
+        Create the kfp client
+        """
+        node = ast.Assign(
+            targets=[ast.Name(id="client", ctx=ast.Store())],
+            value=ast.Call(
+                func=ast.Name(id="Client", ctx=ast.Load()),
+                args=[],
+                keywords=[
+                    ast.keyword(arg="host", value=ast.Constant(value=kfp_host))
+                ],
+            ),
+        )
+        self.tree.body.append(node)
+
+
+    def add_create_run(self):
+        """
+        Call the kfp create run function to run the created pipeline
+        """
+        node = ast.Assign(
+            targets=[ast.Name(id="run", ctx=ast.Store())],
+            value=ast.Call(
+                func=ast.Attribute(
+                    value=ast.Name(id="client", ctx=ast.Load()),
+                    attr="create_run_from_pipeline_func",
+                    ctx=ast.Load(),
+                ),
+                args=[],
+                keywords=[
+                    ast.keyword(arg="pipeline_func", value=ast.Name(id=self.func_name, ctx=ast.Load())),
+                    ast.keyword(arg="enable_caching", value=ast.Constant(value=enable_caching))
+                ],
+            ),
+        )
+        print_node = ast.Expr(
+            value=ast.Call(
+                func=ast.Name(id="print", ctx=ast.Load()),
+                args=[ast.Constant(value="Run ID: "), ast.Attribute(value=ast.Name(id="run", ctx=ast.Load()), attr="run_id", ctx=ast.Load())],
+                keywords=[],
+            )
+        )
+        self.tree.body.extend([node, print_node])
 
 
     def build_pipeline(self, pipeline_id):
@@ -170,6 +215,8 @@ class Pipeline:
         self.add_decorator(func_node)
         self.call_components(func_node)
         self.tree.body.append(func_node)
+        self.create_client()
+        self.add_create_run()
 
         # Write pipeline to file
         with open(f"{pipeline_id}/pipeline.py", "w") as f:
@@ -179,7 +226,7 @@ class Pipeline:
             f.write(kfp_pipeline)
 
 
-    def run(self, kfp_host):
+    def run(self, pipeline):
         """
         Run the pipeline using the kfp backend
         """
@@ -189,3 +236,5 @@ class Pipeline:
         
         self.compile_components(pipeline_id)
         self.build_pipeline(pipeline_id)
+
+        # exec(open(f"{pipeline_id}/pipeline.py").read())
