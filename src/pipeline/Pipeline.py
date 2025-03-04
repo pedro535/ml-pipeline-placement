@@ -218,7 +218,6 @@ class Pipeline:
         self.create_client()
         self.add_create_run()
 
-        # Write pipeline to file
         with open(f"{pipeline_id}/pipeline.py", "w") as f:
             ast.fix_missing_locations(self.tree)
             kfp_pipeline = astor.to_source(self.tree)
@@ -236,5 +235,3 @@ class Pipeline:
         
         self.compile_components(pipeline_id)
         self.build_pipeline(pipeline_id)
-
-        # exec(open(f"{pipeline_id}/pipeline.py").read())
