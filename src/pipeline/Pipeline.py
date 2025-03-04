@@ -247,7 +247,7 @@ class Pipeline:
             f.write(kfp_pipeline)
 
 
-    def run(self, pipeline):
+    def run(self):
         """
         Run the pipeline using the kfp backend
         """
@@ -257,3 +257,5 @@ class Pipeline:
         
         self.compile_components(pipeline_id)
         self.build_pipeline(pipeline_id)
+
+        # TODO: execute the built pipeline

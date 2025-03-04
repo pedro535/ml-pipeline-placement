@@ -41,4 +41,4 @@ component_3 = Component(
 
 pipeline = Pipeline(name="german_traffic_signs")
 pipeline.add([component_1, component_2, component_3])
-pipeline.run("kfp_host")
+pipeline.run()
