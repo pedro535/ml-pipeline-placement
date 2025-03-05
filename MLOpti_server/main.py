@@ -1,5 +1,11 @@
-from fastapi import FastAPI, UploadFile
+import uuid
+from pathlib import Path
+from fastapi import FastAPI, UploadFile, File
 from typing import List
+
+pipelines_dir = Path("../tmp/pipelines")
+pipelines_dir = pipelines_dir.resolve()
+pipelines_dir.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI()
 
@@ -9,14 +15,17 @@ def handle_root():
     return {"message": "ML pipeline placement system"}
 
 
-@app.post("/uploadfile/")
-async def upload_file(files: List[UploadFile]):
+@app.post("/submit/")
+async def upload_file(files: List[UploadFile] = File(...)):
+    pipeline_id = str(uuid.uuid4())
+    path = pipelines_dir / pipeline_id
+    path.mkdir(parents=True, exist_ok=True)
+    
+    file_names = []
     for file in files:
-        print("File name:", file.filename)
-        print("Content type:", file.content_type)
-        
+        file_names.append(file.filename)
         content = await file.read()
-        with open(f"submissions/{file.filename}", "wb") as f:
+        with open(path / file.filename, "wb") as f:
             f.write(content)
 
-    return {"message": "File uploaded successfully"}
+    return {"message": "Files received", "filenames": file_names, "pipeline_id": pipeline_id}
