@@ -8,7 +8,7 @@ data/german_traffic_signs/Test.csv
 data/german_traffic_signs/Train.csv
 
 # Others
-temp/
+tmp/
 tests/
 
 # Byte-compiled / optimized / DLL files
