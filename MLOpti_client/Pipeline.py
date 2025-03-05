@@ -5,8 +5,8 @@ import astor
 import black
 from typing import List
 
-from src.pipeline import Component
-from src.pipeline.consts import (
+from MLOpti_client import Component
+from MLOpti_client.consts import (
     IMPORTS_MAPPING,
     KFP_PIPELINE_DECORATOR,
     PIPELINE_IMPORTS

@@ -3,7 +3,7 @@ import sys
 sys.path.append("../../")
 #######################################
 
-from src.pipeline.artifacts import InputModel, InputDataset
+from MLOpti_client.artifacts import InputModel, InputDataset
 from typing import Dict
 
 

@@ -3,7 +3,7 @@ import sys
 sys.path.append("../../")
 #######################################
 
-from src.pipeline import Pipeline, Component
+from MLOpti_client import Pipeline, Component
 
 from data_collection import data_collection
 from model_training import model_training

@@ -3,7 +3,7 @@ import astor
 import inspect
 import black
 
-from src.pipeline.consts import (
+from MLOpti_client.consts import (
     IMPORTS_MAPPING,
     TYPES_MAPPING,
     KFP_COMPONENT_DECORATOR

@@ -3,7 +3,7 @@ import sys
 sys.path.append("../../")
 #######################################
 
-from src.pipeline.artifacts import OutputDataset
+from MLOpti_client.artifacts import OutputDataset
 from typing import List
 
 def data_collection(

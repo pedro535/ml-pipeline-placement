@@ -3,7 +3,7 @@ import sys
 sys.path.append("../../")
 #######################################
 
-from src.pipeline.artifacts import InputDataset, OutputModel
+from MLOpti_client.artifacts import InputDataset, OutputModel
 
 
 def model_training(
