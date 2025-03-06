@@ -9,6 +9,6 @@ class InputDataset:
 class InputModel:
     """Marker type for input models."""
 
-    
+
 class OutputModel:
     """Marker type for output models."""

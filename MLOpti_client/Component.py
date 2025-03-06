@@ -1,31 +1,72 @@
+import ast
 import inspect
+from typing import Callable, Dict
+
+from MLOpti_client import ComponentConverter
+
 
 class Component:
 
-    def __init__(self, image, func, args):
+    def __init__(self, image: str, func: Callable, args: Dict = None):
         self.image = image
         self.func = func
-        self.user_args = args
         self.name = func.__name__
-        self.file = None
+        self.user_args = args
+        self.arg_types = {}
         self.filename = None
         self.volumes = []
-        self._get_source_file()
-        
 
-    def _get_source_file(self):
+        self.get_source_file()
+        self.get_tree()
+        self.get_arg_types()
+
+
+    def get_source_file(self) -> None:
         """
         Get the source file of the function
         """
-        self.file = inspect.getfile(self.func)
-        self.filename = self.file.split("/")[-1]
-        
+        abs_path = inspect.getfile(self.func)
+        self.filename = abs_path.split("/")[-1]
+
         if self.filename.split(".")[0] != self.name:
             raise ValueError("The file name must match the function name")
 
 
-    def mount_volume(self, pvc, mount_path):
+    def get_tree(self) -> None:
+        """
+        Parse the source file to an AST
+        """
+        with open(self.filename, "r") as f:
+            tree = ast.parse(f.read())
+        tree.body = tree.body[2:]  # REMOVE LATER
+        self.tree = tree
+
+
+    def get_arg_types(self) -> None:
+        """
+        Get all arguments of the function
+        """
+        for arg_name, arg_type in self.func.__annotations__.items():
+            self.arg_types[arg_name] = arg_type.__name__
+
+
+    def mount_volume(self, pvc: str, mount_path: str) -> None:
         """
         Mount a volume to a component
         """
         self.volumes.append((pvc, mount_path))
+
+
+    def convert(self) -> None:
+        """
+        Compile the component to a kfp component
+        """
+        converter = ComponentConverter(self.tree)
+
+        (
+            converter.remove_type_imports()
+            .add_imports(self.arg_types)
+            .add_decorator(self.name, self.image)
+            .update_arg_types(self.name)
+            .save_component(self.filename)
+        )
