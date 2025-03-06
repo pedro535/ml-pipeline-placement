@@ -1,9 +1,4 @@
-#### For development purposes only ####
-import sys
-sys.path.append("../../")
-#######################################
-
-from MLOpti_client.artifacts import InputDataset, OutputModel
+from mlopx.artifacts import InputDataset, OutputModel
 
 
 def model_training(

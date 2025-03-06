@@ -1,9 +1,4 @@
-#### For development purposes only ####
-import sys
-sys.path.append("../../")
-#######################################
-
-from MLOpti_client.artifacts import InputModel, InputDataset
+from mlopx.artifacts import InputModel, InputDataset
 from typing import Dict
 
 

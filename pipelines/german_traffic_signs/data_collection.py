@@ -1,10 +1,4 @@
-#### For development purposes only ####
-import sys
-sys.path.append("../../")
-#######################################
-
-from MLOpti_client.artifacts import OutputDataset
-from typing import List
+from mlopx.artifacts import OutputDataset
 
 def data_collection(
     dataset_path: str,

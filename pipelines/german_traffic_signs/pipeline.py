@@ -1,9 +1,4 @@
-#### For development purposes only ####
-import sys
-sys.path.append("../../")
-#######################################
-
-from MLOpti_client import Pipeline, Component
+from mlopx import Pipeline, Component
 
 from data_collection import data_collection
 from model_training import model_training
@@ -42,4 +37,5 @@ component_3 = Component(
 
 pipeline = Pipeline(name="german_traffic_signs")
 pipeline.add([component_1, component_2, component_3])
-pipeline.submit(SERVER_URL)
+# pipeline.submit(SERVER_URL)
+pipeline.build(kfp_url="url", enable_caching=False, placement=["n1", "n2", "n3"])
