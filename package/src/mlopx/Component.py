@@ -37,9 +37,7 @@ class Component:
         Parse the source file to an AST
         """
         with open(self.filename, "r") as f:
-            tree = ast.parse(f.read())
-        tree.body = tree.body[2:]  # REMOVE LATER
-        self.tree = tree
+            self.tree = ast.parse(f.read())
 
 
     def get_arg_types(self) -> None:
