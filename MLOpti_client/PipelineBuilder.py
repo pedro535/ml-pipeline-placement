@@ -77,30 +77,6 @@ class PipelineBuilder:
         return self
 
 
-    def mount_volumes(self, component: Component) -> None:
-        """
-        Mount volumes to the component
-        """
-        for pvc, mount_path in component.volumes:
-            invoke_node = ast.Call(
-                func=ast.Name(id="mount_pvc", ctx=ast.Load()),
-                args=[],
-                keywords=[
-                    ast.keyword(
-                        arg="task",
-                        value=ast.Name(id=f"{component.name}_task", ctx=ast.Load()),
-                    ),
-                    ast.keyword(arg="pvc_name", value=ast.Constant(value=pvc)),
-                    ast.keyword(arg="mount_path", value=ast.Constant(value=mount_path)),
-                ],
-            )
-            node = ast.Assign(
-                targets=[ast.Name(id=f"{component.name}_task", ctx=ast.Store())],
-                value=invoke_node,
-            )
-            self.func_node.body.append(node)
-
-
     def call_components(self, components: List[Component], artifacts: Dict):
         """
         Call the compiled components in the pipeline function
@@ -132,8 +108,74 @@ class PipelineBuilder:
                 ),
             )
             self.func_node.body.append(node)
-            self.mount_volumes(component)
+
         self.tree.body.append(self.func_node)
+        return self
+
+
+    def mount_volumes(self, components: List[Component]):
+        """
+        Mount volumes to components
+        """
+        for component in components:
+            for pvc, mount_path in component.volumes:
+                invoke_node = ast.Call(
+                    func=ast.Name(id="mount_pvc", ctx=ast.Load()),
+                    args=[],
+                    keywords=[
+                        ast.keyword(
+                            arg="task",
+                            value=ast.Name(id=f"{component.name}_task", ctx=ast.Load()),
+                        ),
+                        ast.keyword(
+                            arg="pvc_name",
+                            value=ast.Constant(value=pvc)
+                        ),
+                        ast.keyword(
+                            arg="mount_path",
+                            value=ast.Constant(value=mount_path)
+                        )
+                    ],
+                )
+                node = ast.Assign(
+                    targets=[ast.Name(id=f"{component.name}_task", ctx=ast.Store())],
+                    value=invoke_node,
+                )
+                self.func_node.body.append(node)
+        return self
+
+        
+    def add_node_selector(self, components: List[Component], node_selectors: List[str]):
+        """
+        Add node selectors to components
+        """
+        if not node_selectors:
+            return self
+        
+        for i, component in enumerate(components):
+            invoke_node = ast.Call(
+                func=ast.Name(id="add_node_selector", ctx=ast.Load()),
+                args=[],
+                keywords=[
+                    ast.keyword(
+                        arg="task",
+                        value=ast.Name(id=f"{component.name}_task", ctx=ast.Load()),
+                    ),
+                    ast.keyword(
+                        arg="label_key",
+                        value=ast.Constant(value="kubernetes.io/hostname")
+                    ),
+                    ast.keyword(
+                        arg="label_value",
+                        value=ast.Constant(value=node_selectors[i])
+                    )
+                ],
+            )
+            node = ast.Assign(
+                targets=[ast.Name(id=f"{component.name}_task", ctx=ast.Store())],
+                value=invoke_node,
+            )
+            self.func_node.body.append(node)
         return self
 
 

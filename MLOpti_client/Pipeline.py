@@ -69,7 +69,7 @@ class Pipeline:
         self.handle_response(response)
 
 
-    def build(self, kfp_url: str, enable_caching: str, nodes: List[str]):
+    def build(self, kfp_url: str, enable_caching: str, placement: List[str]):
         """
         Build the kfp pipeline
         """
@@ -82,6 +82,8 @@ class Pipeline:
             .create_function(self.func_name)
             .add_decorator(self.name)
             .call_components(self.components, self.artifacts)
+            .mount_volumes(self.components)
+            .add_node_selector(self.components, placement)
             .create_client(kfp_url)
             .add_create_run(self.func_name, enable_caching)
             .save_pipeline()
