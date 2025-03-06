@@ -1,7 +1,9 @@
 import uuid
+import os
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File
 from typing import List
+import subprocess
 
 pipelines_dir = Path("../tmp/pipelines")
 pipelines_dir = pipelines_dir.resolve()
@@ -28,4 +30,19 @@ async def upload_file(files: List[UploadFile] = File(...)):
         with open(path / file.filename, "wb") as f:
             f.write(content)
 
-    return {"message": "Files received", "filenames": file_names, "pipeline_id": pipeline_id}
+    response = {
+        "status": "success",
+        "pipeline_id": pipeline_id,
+        "files": file_names
+    }
+    return response
+
+
+@app.get("/tests/")
+def tests():
+    result = subprocess.run(
+        ["python3", pipelines_dir / "1" / "teste.py", "-p", "node1", "node2"],
+        capture_output=True,
+        cwd=pipelines_dir / "1"
+    )
+    return {"output": result.stdout.decode("utf-8")}
