@@ -1,7 +1,7 @@
 import requests
 from typing import List, Tuple
 
-from MLOpti_client import Component, PipelineBuilder
+from mlopx import Component, PipelineBuilder
 
 
 class Pipeline:

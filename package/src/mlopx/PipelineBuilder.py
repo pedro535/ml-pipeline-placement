@@ -3,8 +3,8 @@ import astor
 import black
 from typing import List, Dict
 
-from MLOpti_client import Component
-from MLOpti_client.consts import (
+from mlopx import Component
+from mlopx.consts import (
     IMPORTS_MAPPING,
     KFP_PIPELINE_DECORATOR,
     PIPELINE_IMPORTS,

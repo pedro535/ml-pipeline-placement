@@ -3,7 +3,7 @@ import astor
 import black
 from typing import Dict
 
-from MLOpti_client.consts import IMPORTS_MAPPING, TYPES_MAPPING, KFP_COMPONENT_DECORATOR
+from mlopx.consts import IMPORTS_MAPPING, TYPES_MAPPING, KFP_COMPONENT_DECORATOR
 
 
 class ComponentConverter:

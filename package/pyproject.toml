@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mlopx"
+version = "1.0.0"
+authors = [
+  { name="Pedro Rodrigues", email="pedrofrodrigues4@gmail.com" },
+]
+description = "Python package that allows the development of intuitive ML pipelines."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = {text = "MIT"}
+
+dependencies = [
+  'kfp >= 2.11.0',
+  'kfp-kubernetes >= 1.4.0',
+  'astor >= 0.8.1'
+]
+
+[project.urls]
+Homepage = "https://github.com/pedro535"
