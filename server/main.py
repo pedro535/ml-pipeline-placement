@@ -1,20 +1,49 @@
-import uuid
 import os
+import uuid
+from dotenv import load_dotenv
 from pathlib import Path
-from fastapi import FastAPI, UploadFile
 from typing import List
-import subprocess
+from fastapi import FastAPI, UploadFile
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.background import BackgroundScheduler
 
-pipelines_dir = Path("../tmp/pipelines")
+from server import PipelineManager
+
+
+load_dotenv()
+KFP_URL = os.getenv("KFP_URL")
+ENABLE_CACHING = bool(os.getenv("ENABLE_CACHING"))
+INTERVAL = int(os.getenv("INTERVAL"))
+PIPELINES_DIR = os.getenv("PIPELINES_DIR")
+
+pipelines_dir = Path(PIPELINES_DIR)
 pipelines_dir = pipelines_dir.resolve()
 pipelines_dir.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI()
+pmanager = PipelineManager(KFP_URL, ENABLE_CACHING, PIPELINES_DIR)
+scheduler = BackgroundScheduler()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.add_job(
+        func=pmanager.process_pipelines,
+        trigger="interval",
+        seconds=INTERVAL,
+    )
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
 def handle_root():
-    return {"message": "ML pipeline placement system"}
+    return {
+        "status": "success",
+        "message": "ML pipeline placement system",
+    }
 
 
 @app.post("/submit/")
@@ -23,6 +52,7 @@ async def upload_file(components: List[UploadFile], pipeline: UploadFile):
     path = pipelines_dir / pipeline_id
     path.mkdir(parents=True, exist_ok=True)
     
+    # Save component files
     filenames = []
     for file in components:
         filenames.append(file.filename)
@@ -30,23 +60,20 @@ async def upload_file(components: List[UploadFile], pipeline: UploadFile):
         with open(path / file.filename, "wb") as f:
             f.write(content)
 
+    # Save pipeline file
+    filenames.append(pipeline.filename)
     with open(path / pipeline.filename, "wb") as f:
         content = await pipeline.read()
         f.write(content)
 
+    # Add pipeline to the queue
+    pmanager.add_pipeline(pipeline_id)
+
     response = {
         "status": "success",
+        "message": "Pipeline submitted successfully",
         "pipeline_id": pipeline_id,
-        "files": filenames
+        "files": filenames,
     }
     return response
-
-
-@app.get("/tests/")
-def tests():
-    result = subprocess.run(
-        ["python3", pipelines_dir / "1" / "teste.py", "-p", "node1", "node2"],
-        capture_output=True,
-        cwd=pipelines_dir / "1"
-    )
-    return {"output": result.stdout.decode("utf-8")}
+    
