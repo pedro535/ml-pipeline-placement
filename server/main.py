@@ -1,7 +1,7 @@
 import uuid
 import os
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile
 from typing import List
 import subprocess
 
@@ -18,22 +18,26 @@ def handle_root():
 
 
 @app.post("/submit/")
-async def upload_file(files: List[UploadFile] = File(...)):
+async def upload_file(components: List[UploadFile], pipeline: UploadFile):
     pipeline_id = str(uuid.uuid4())
     path = pipelines_dir / pipeline_id
     path.mkdir(parents=True, exist_ok=True)
     
-    file_names = []
-    for file in files:
-        file_names.append(file.filename)
+    filenames = []
+    for file in components:
+        filenames.append(file.filename)
         content = await file.read()
         with open(path / file.filename, "wb") as f:
             f.write(content)
 
+    with open(path / pipeline.filename, "wb") as f:
+        content = await pipeline.read()
+        f.write(content)
+
     response = {
         "status": "success",
         "pipeline_id": pipeline_id,
-        "files": file_names
+        "files": filenames
     }
     return response
 

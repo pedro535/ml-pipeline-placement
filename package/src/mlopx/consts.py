@@ -21,3 +21,12 @@ TYPES_MAPPING = {
     "OutputModel": "Output[Model]",
     "InputModel": "Input[Model]",
 }
+
+ARGPARSE_CODE = [
+    "import argparse",
+    "parser = argparse.ArgumentParser()",
+    "parser.add_argument('-u', type=str, help='kfp URL', required=True)",
+    "parser.add_argument('-c', help='Enable caching', action='store_true')",
+    "parser.add_argument('-p', nargs='+', help='Placement', required=True)",
+    "args = parser.parse_args()"
+]

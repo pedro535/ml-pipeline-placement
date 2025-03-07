@@ -1,7 +1,12 @@
+import os
 import requests
+import ast
+import astor
+import black
 from typing import List, Tuple
 
 from mlopx import Component, PipelineBuilder
+from mlopx.consts import ARGPARSE_CODE
 
 
 class Pipeline:
@@ -24,15 +29,43 @@ class Pipeline:
                 if "Output" in arg_type:
                     self.artifacts[arg_name] = component.name
 
+    
+    def create_tmp_pipeline(self, tmp_filename: str) -> None:
+        """
+        Create a temporary pipeline file to be submitted
+        """
+        with open("pipeline.py", "r") as f:
+            code = f.read()
+            tree = ast.parse(code)
+
+        argparse_nodes = [n for line in ARGPARSE_CODE for n in ast.parse(line).body]
+        run_node = ast.parse("pipeline.build(args.u, args.c, args.p)").body
+
+        for i, node in enumerate(tree.body):
+            if not isinstance(node, ast.ImportFrom) and not isinstance(node, ast.Import):
+                break
+            
+        tree.body = tree.body[:i] + argparse_nodes + tree.body[i:-1] + run_node
+        with open(tmp_filename, "w") as f:
+            ast.fix_missing_locations(tree)
+            kfp_pipeline = astor.to_source(tree)
+            kfp_pipeline = black.format_str(kfp_pipeline, mode=black.Mode())
+            f.write(kfp_pipeline)
+
 
     def prepare_files(self) -> List[Tuple]:
         """
         Prepare the files for submission
         """
         files = [
-            ("files", (c.filename, open(c.filename, "rb"))) for c in self.components
+            ("components", (c.filename, open(c.filename, "rb"))) for c in self.components
         ]
-        files.append(("files", ("pipeline.py", open("pipeline.py", "rb"))))
+
+        tmp_file = "pipeline_tmp.py"
+        self.create_tmp_pipeline(tmp_file)
+        files.append(("pipeline", ("pipeline.py", open(tmp_file, "rb"))))
+        os.remove(tmp_file)
+
         return files
 
 
