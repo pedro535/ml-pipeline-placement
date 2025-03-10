@@ -20,7 +20,7 @@ pipelines_dir = Path(PIPELINES_DIR)
 pipelines_dir = pipelines_dir.resolve()
 pipelines_dir.mkdir(parents=True, exist_ok=True)
 
-pmanager = PipelineManager(KFP_URL, ENABLE_CACHING, PIPELINES_DIR)
+pmanager = PipelineManager(KFP_URL, ENABLE_CACHING, pipelines_dir)
 scheduler = BackgroundScheduler()
 
 @asynccontextmanager
@@ -55,6 +55,7 @@ async def upload_file(components: List[UploadFile], pipeline: UploadFile):
     # Save component files
     filenames = []
     for file in components:
+        print(file.filename)
         filenames.append(file.filename)
         content = await file.read()
         with open(path / file.filename, "wb") as f:
