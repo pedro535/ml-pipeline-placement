@@ -12,9 +12,10 @@ from server import PipelineManager
 
 load_dotenv()
 KFP_URL = os.getenv("KFP_URL")
-ENABLE_CACHING = bool(os.getenv("ENABLE_CACHING"))
-INTERVAL = int(os.getenv("INTERVAL"))
+ENABLE_CACHING = True if os.getenv("ENABLE_CACHING") == "true" else False
 PIPELINES_DIR = os.getenv("PIPELINES_DIR")
+WAIT_INTERVAL = int(os.getenv("WAIT_INTERVAL"))
+UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL"))
 
 pipelines_dir = Path(PIPELINES_DIR)
 pipelines_dir = pipelines_dir.resolve()
@@ -28,7 +29,12 @@ async def lifespan(app: FastAPI):
     scheduler.add_job(
         func=pmanager.process_pipelines,
         trigger="interval",
-        seconds=INTERVAL,
+        seconds=WAIT_INTERVAL,
+    )
+    scheduler.add_job(
+        func=pmanager.update_active_pipelines,
+        trigger="interval",
+        seconds=UPDATE_INTERVAL,
     )
     scheduler.start()
     yield
@@ -53,28 +59,28 @@ async def upload_file(components: List[UploadFile], pipeline: UploadFile):
     path.mkdir(parents=True, exist_ok=True)
     
     # Save component files
-    filenames = []
+    component_files = []
     for file in components:
-        print(file.filename)
-        filenames.append(file.filename)
+        component_files.append(file.filename)
         content = await file.read()
         with open(path / file.filename, "wb") as f:
             f.write(content)
 
     # Save pipeline file
-    filenames.append(pipeline.filename)
     with open(path / pipeline.filename, "wb") as f:
         content = await pipeline.read()
         f.write(content)
 
     # Add pipeline to the queue
-    pmanager.add_pipeline(pipeline_id)
+    pmanager.add_pipeline(
+        pipeline_id=pipeline_id,
+        component_files=component_files
+    )
 
     response = {
         "status": "success",
         "message": "Pipeline submitted successfully",
-        "pipeline_id": pipeline_id,
-        "files": filenames,
+        "pipeline_id": pipeline_id
     }
     return response
     
