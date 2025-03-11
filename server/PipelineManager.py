@@ -2,11 +2,14 @@ from datetime import datetime
 from dateutil import tz
 from pathlib import Path
 from queue import Queue
-import subprocess
 from typing import List, Dict
+import subprocess
+
 from kfp import Client
 
+# REMOVE LATER
 import json
+
 
 class PipelineManager:
 
@@ -134,5 +137,6 @@ class PipelineManager:
                 self.update_component_details(pipeline, run_details["run_details"]["task_details"])
                 self.update_pipeline_details(pipeline, run_details)
 
+                # REMOVE LATER
                 print("---" * 10)
                 print(json.dumps(pipeline, indent=4, default=str))
