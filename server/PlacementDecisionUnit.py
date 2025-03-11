@@ -1,11 +1,13 @@
 from typing import Dict
 
+from server import NodeManager
+
 
 class PlacementDecisionUnit:
     
-    def __init__(self):
-        pass
+    def __init__(self, nmanager: NodeManager):
+        self.nmanager = nmanager
 
     
-    def get_placement(self, pipelines: Dict) -> Dict:
-        pass
+    def get_placement(self, analyses: Dict):
+        print("Analyses:", analyses)

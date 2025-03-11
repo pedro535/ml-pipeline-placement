@@ -1,26 +1,25 @@
 from datetime import datetime
 from dateutil import tz
-from pathlib import Path
 from queue import Queue
 from typing import List, Dict
 import subprocess
-
 from kfp import Client
-
-# REMOVE LATER
 import json
+
+from server import PlacementDecisionUnit
+from server.settings import KFP_URL, ENABLE_CACHING, pipelines_dir
 
 
 class PipelineManager:
 
-    def __init__(self, kfp_url: str, enable_caching: bool, pipelines_dir: Path):
-        self.kfp_url = kfp_url
-        self.enable_caching = enable_caching
+    def __init__(self, pdunit: PlacementDecisionUnit):
+        self.kfp_url = KFP_URL
+        self.enable_caching = ENABLE_CACHING
         self.dir = pipelines_dir
         self.pipelines = {}
         self.queue = Queue()
-        self.kfp_client = Client(host=kfp_url)
-        print(enable_caching)
+        self.kfp_client = Client(host=self.kfp_url)
+        self.pdunit = pdunit
 
 
     def add_pipeline(self, pipeline_id: str, component_files: List[str]):
@@ -44,11 +43,16 @@ class PipelineManager:
             self.pipelines[pipeline_id]["components"][c]["file"] = component_files[i]
 
     
-    def analyze_pipeline(self, pipeline_id: str):
-        pass
+    def analyse_pipeline(self, pipeline_id: str):
+        pipeline = self.pipelines[pipeline_id]
+        analisys = {c: {} for c in pipeline["components"]}
+
+        # PERFORM THE ANALYSIS HERE
+
+        return analisys
 
     
-    def build_pipeline(self, pipeline_id: str):
+    def build_pipeline(self, pipeline_id: str, placement: Dict):
         """
         Build the kfp pipeline
         """
@@ -92,10 +96,19 @@ class PipelineManager:
         Process pipelines in the queue
         """
         print("Queue size:", self.queue.qsize())
+
+        analyses = {}
+        ids = []
         while not self.queue.empty():
             pipeline_id = self.queue.get()
-            self.build_pipeline(pipeline_id)
-            self.run_pipeline(pipeline_id)
+            ids.append(pipeline_id)
+            analyses[pipeline_id] = self.analyse_pipeline(pipeline_id)
+
+        if ids:
+            placement = self.pdunit.get_placement(analyses)
+            # for pipeline_id in ids:
+            #     self.build_pipeline(pipeline_id, placement[pipeline_id])
+            #     self.run_pipeline(pipeline_id)
 
     
     def update_component_details(self, pipeline: Dict, task_details: List):
