@@ -3,4 +3,5 @@ kfp==2.12.1
 kfp-kubernetes==1.4.0
 python-multipart==0.0.9
 APScheduler==3.11.0
+kubernetes==30.1.0
 mlopx
