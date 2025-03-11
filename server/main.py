@@ -1,27 +1,16 @@
-import os
 import uuid
-from dotenv import load_dotenv
-from pathlib import Path
 from typing import List
 from fastapi import FastAPI, UploadFile
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from server import PipelineManager
+from server.settings import WAIT_INTERVAL, UPDATE_INTERVAL, pipelines_dir
+from server import PipelineManager, PlacementDecisionUnit, NodeManager
 
 
-load_dotenv()
-KFP_URL = os.getenv("KFP_URL")
-ENABLE_CACHING = True if os.getenv("ENABLE_CACHING") == "true" else False
-PIPELINES_DIR = os.getenv("PIPELINES_DIR")
-WAIT_INTERVAL = int(os.getenv("WAIT_INTERVAL"))
-UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL"))
-
-pipelines_dir = Path(PIPELINES_DIR)
-pipelines_dir = pipelines_dir.resolve()
-pipelines_dir.mkdir(parents=True, exist_ok=True)
-
-pmanager = PipelineManager(KFP_URL, ENABLE_CACHING, pipelines_dir)
+nmanager = NodeManager()
+pdunit = PlacementDecisionUnit(nmanager)
+pmanager = PipelineManager(pdunit)
 scheduler = BackgroundScheduler()
 
 @asynccontextmanager
