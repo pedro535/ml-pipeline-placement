@@ -5,12 +5,14 @@ from pathlib import Path
 load_dotenv()
 
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
-KUBE_CONFIG = os.getenv("KUBE_CONFIG", "/root/.kube/config")
-KFP_URL = os.getenv("KFP_URL", "default_url")
+KUBE_CONFIG = os.getenv("KUBE_CONFIG")
+KFP_URL = os.getenv("KFP_URL")
+PROMETHEUS_URL = os.getenv("PROMETHEUS_URL")
 ENABLE_CACHING = os.getenv("ENABLE_CACHING", "false").lower() == "true"
 PIPELINES_DIR = os.getenv("PIPELINES_DIR", "./pipelines")
 WAIT_INTERVAL = int(os.getenv("WAIT_INTERVAL", "10"))
-UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", "30"))
+UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", "5"))
+NODE_EXPORTER_PORT = int(os.getenv("NODE_EXPORTER_PORT", "9100"))
 
 pipelines_dir = Path(PIPELINES_DIR).resolve()
 pipelines_dir.mkdir(parents=True, exist_ok=True)

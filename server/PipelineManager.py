@@ -57,7 +57,11 @@ class PipelineManager:
         Build the kfp pipeline
         """
         path = self.dir / pipeline_id / "pipeline.py"
-        args = ["python3", path, "-u", self.kfp_url, "-p", "k3s-node3", "k3s-node2", "k3s-node1"]
+        args = ["python3", path, "-u", self.kfp_url, "-p"]
+
+        for node in placement.values():
+            args.append(node)
+
         if self.enable_caching:
             args.append("-c")
 
@@ -106,9 +110,10 @@ class PipelineManager:
 
         if ids:
             placement = self.pdunit.get_placement(analyses)
-            # for pipeline_id in ids:
-            #     self.build_pipeline(pipeline_id, placement[pipeline_id])
-            #     self.run_pipeline(pipeline_id)
+            print(json.dumps(placement, indent=4, default=str))
+            for pipeline_id in ids:
+                self.build_pipeline(pipeline_id, placement[pipeline_id])
+                self.run_pipeline(pipeline_id)
 
     
     def update_component_details(self, pipeline: Dict, task_details: List):
