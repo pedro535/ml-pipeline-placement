@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 import random
 import json
 
@@ -11,16 +11,19 @@ class PlacementDecisionUnit:
         self.nmanager = nmanager
 
     
-    def get_placement(self, analyses: Dict):
+    def get_placements(self, analyses: Dict) -> List:
         """
-        Get placement for the pipeline components
+        Get placements for the submitted pipelines
         """
         nodes = self.nmanager.get_nodes()
-        placement = {}
+        placements = []
 
         for pipeline_id, analysis in analyses.items():
-            placement[pipeline_id] = {}
-            for component in analysis:
-                placement[pipeline_id][component] = random.choice(list(nodes.keys()))
+            placement = {
+                "pipeline_id": pipeline_id,
+                "mapping": [(component, random.choice(list(nodes.keys()))) for component in analysis]
+            }
+            placements.append(placement)
 
-        return placement
+        print(json.dumps(placements, indent=4, default=str))
+        return placements

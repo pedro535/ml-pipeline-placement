@@ -1,7 +1,7 @@
 from datetime import datetime
 from dateutil import tz
 from queue import Queue
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import subprocess
 from kfp import Client
 import json
@@ -16,17 +16,18 @@ class PipelineManager:
         self.kfp_url = KFP_URL
         self.enable_caching = ENABLE_CACHING
         self.dir = pipelines_dir
-        self.pipelines = {}
-        self.queue = Queue()
         self.kfp_client = Client(host=self.kfp_url)
         self.pdunit = pdunit
+        self.pipelines = {}
+        self.submission_queue = Queue()
+        self.execution_queue = Queue()
 
 
     def add_pipeline(self, pipeline_id: str, component_files: List[str]):
         """
         Add pipeline to the queue
         """
-        self.queue.put(pipeline_id)
+        self.submission_queue.put(pipeline_id)
         
         component_names = [c.split(".")[0].lower().replace("_", "-") for c in component_files]
         self.pipelines[pipeline_id] = {
@@ -46,20 +47,18 @@ class PipelineManager:
     def analyse_pipeline(self, pipeline_id: str):
         pipeline = self.pipelines[pipeline_id]
         analisys = {c: {} for c in pipeline["components"]}
-
         # PERFORM THE ANALYSIS HERE
-
         return analisys
 
     
-    def build_pipeline(self, pipeline_id: str, placement: Dict):
+    def build_pipeline(self, pipeline_id: str, placement: List[Tuple[str, str]]):
         """
         Build the kfp pipeline
         """
         path = self.dir / pipeline_id / "pipeline.py"
         args = ["python3", path, "-u", self.kfp_url, "-p"]
 
-        for node in placement.values():
+        for _, node in placement:
             args.append(node)
 
         if self.enable_caching:
@@ -97,23 +96,30 @@ class PipelineManager:
 
     def process_pipelines(self):
         """
-        Process pipelines in the queue
+        Process submitted pipelines
         """
-        print("Queue size:", self.queue.qsize())
-
+        if self.submission_queue.empty():
+            print("No pipelines to process")
+            return
+        
+        print(f"Processing {self.submission_queue.qsize()} pipelines")
         analyses = {}
         ids = []
-        while not self.queue.empty():
-            pipeline_id = self.queue.get()
+        while not self.submission_queue.empty():
+            pipeline_id = self.submission_queue.get()
             ids.append(pipeline_id)
             analyses[pipeline_id] = self.analyse_pipeline(pipeline_id)
 
-        if ids:
-            placement = self.pdunit.get_placement(analyses)
-            print(json.dumps(placement, indent=4, default=str))
-            for pipeline_id in ids:
-                self.build_pipeline(pipeline_id, placement[pipeline_id])
-                self.run_pipeline(pipeline_id)
+        placements = self.pdunit.get_placements(analyses)
+        for placement in placements:
+            pipeline_id = placement["pipeline_id"]
+            mapping = placement["mapping"]
+
+            for c, node in mapping:
+                self.pipelines[pipeline_id]["components"][c]["node"] = node
+            
+            self.build_pipeline(pipeline_id, mapping)
+            self.execution_queue.put(pipeline_id)
 
     
     def update_component_details(self, pipeline: Dict, task_details: List):
