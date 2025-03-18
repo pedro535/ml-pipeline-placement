@@ -4,8 +4,14 @@ from fastapi import FastAPI, UploadFile
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from server.settings import WAIT_INTERVAL, UPDATE_INTERVAL, pipelines_dir
 from server import PipelineManager, PlacementDecisionUnit, NodeManager
+from server.settings import (
+    WAIT_INTERVAL,
+    UPDATE_INTERVAL,
+    METADATA_FILENAME,
+    PIPELINE_FILENAME,
+    pipelines_dir
+)
 
 
 nmanager = NodeManager()
@@ -42,7 +48,11 @@ def handle_root():
 
 
 @app.post("/submit/")
-async def upload_file(components: List[UploadFile], pipeline: UploadFile):
+async def upload_file(
+    components: List[UploadFile],
+    pipeline: UploadFile,
+    metadata: UploadFile
+):
     pipeline_id = str(uuid.uuid4())
     path = pipelines_dir / pipeline_id
     path.mkdir(parents=True, exist_ok=True)
@@ -56,11 +66,16 @@ async def upload_file(components: List[UploadFile], pipeline: UploadFile):
             f.write(content)
 
     # Save pipeline file
-    with open(path / pipeline.filename, "wb") as f:
+    with open(path / PIPELINE_FILENAME, "wb") as f:
         content = await pipeline.read()
         f.write(content)
 
-    # Add pipeline to the queue
+    # Save metadata file
+    with open(path / METADATA_FILENAME, "wb") as f:
+        content = await pipeline.read()
+        f.write(content)
+
+    # Register pipeline
     pmanager.add_pipeline(
         pipeline_id=pipeline_id,
         component_files=component_files

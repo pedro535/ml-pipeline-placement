@@ -25,5 +25,5 @@ class PlacementDecisionUnit:
             }
             placements.append(placement)
 
-        print(json.dumps(placements, indent=4, default=str))
+        # print(json.dumps(placements, indent=4, default=str))
         return placements
