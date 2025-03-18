@@ -3,10 +3,11 @@ import requests
 import ast
 import astor
 import black
+from pathlib import Path
 from typing import List, Tuple
 
 from mlopx import Component, PipelineBuilder
-from mlopx.consts import ARGPARSE_CODE
+from mlopx.consts import ARGPARSE_CODE, METADATA_FILENAME
 
 
 class Pipeline:
@@ -57,10 +58,17 @@ class Pipeline:
         """
         Prepare the files for submission
         """
+        # Component files
         files = [
             ("components", (c.filename, open(c.filename, "rb"))) for c in self.components
         ]
 
+        # Metadata file
+        if METADATA_FILENAME not in os.listdir():
+            raise FileNotFoundError("You must have a metadata.json file in the current directory")
+        files.append(("metadata", (METADATA_FILENAME, open(METADATA_FILENAME, "rb"))))
+
+        # Pipeline file
         tmp_file = "pipeline_tmp.py"
         self.create_tmp_pipeline(tmp_file)
         files.append(("pipeline", ("pipeline.py", open(tmp_file, "rb"))))
