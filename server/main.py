@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
         seconds=WAIT_INTERVAL,
     )
     scheduler.add_job(
-        func=pmanager.update_active_pipelines,
+        func=pmanager.update_running_pipeline,
         trigger="interval",
         seconds=UPDATE_INTERVAL,
     )

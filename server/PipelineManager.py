@@ -21,6 +21,7 @@ class PipelineManager:
         self.pipelines = {}
         self.submission_queue = Queue()
         self.execution_queue = Queue()
+        self.running_pipeline = None
 
 
     def add_pipeline(self, pipeline_id: str, component_files: List[str]):
@@ -31,7 +32,7 @@ class PipelineManager:
         
         component_names = [c.split(".")[0].lower().replace("_", "-") for c in component_files]
         self.pipelines[pipeline_id] = {
-            "components": {c: {} for c in component_names},
+            "components": {},
             "state": "QUEUED",
             "kfp_id": None,
             "scheduled_at": None,
@@ -41,7 +42,14 @@ class PipelineManager:
         }
 
         for i, c in enumerate(component_names):
-            self.pipelines[pipeline_id]["components"][c]["file"] = component_files[i]
+            self.pipelines[pipeline_id]["components"][c] = {
+                "file": component_files[i],
+                "node": None,
+                "start_time": None,
+                "end_time": None,
+                "duration": None,
+                "state": None
+            }
 
     
     def analyse_pipeline(self, pipeline_id: str):
@@ -99,15 +107,11 @@ class PipelineManager:
         Process submitted pipelines
         """
         if self.submission_queue.empty():
-            print("No pipelines to process")
             return
         
-        print(f"Processing {self.submission_queue.qsize()} pipelines")
         analyses = {}
-        ids = []
         while not self.submission_queue.empty():
             pipeline_id = self.submission_queue.get()
-            ids.append(pipeline_id)
             analyses[pipeline_id] = self.analyse_pipeline(pipeline_id)
 
         placements = self.pdunit.get_placements(analyses)
@@ -151,16 +155,23 @@ class PipelineManager:
         pipeline["last_update"] = datetime.now(tz=tz.tzutc())
 
 
-    def update_active_pipelines(self):
+    def update_running_pipeline(self):
         """
-        Update the state of active pipelines
+        Update the state of the running pipeline or start the next one
         """
-        for pipeline in self.pipelines.values():
-            if pipeline["state"] not in ["QUEUED", "SUCCEEDED", "FAILED"]:
-                run_details = self.kfp_client.get_run(pipeline["kfp_id"]).to_dict()
-                self.update_component_details(pipeline, run_details["run_details"]["task_details"])
-                self.update_pipeline_details(pipeline, run_details)
+        if self.running_pipeline is not None:
+            pipeline = self.pipelines[self.running_pipeline]
+            run_details = self.kfp_client.get_run(pipeline["kfp_id"]).to_dict()
+            self.update_component_details(pipeline, run_details["run_details"]["task_details"])
+            self.update_pipeline_details(pipeline, run_details)
+            if pipeline["state"] in ["SUCCEEDED", "FAILED"]:
+                self.running_pipeline = None
 
-                # REMOVE LATER
-                print("---" * 10)
-                print(json.dumps(pipeline, indent=4, default=str))
+        if self.running_pipeline is None and not self.execution_queue.empty():
+            pipeline_id = self.execution_queue.get()
+            self.run_pipeline(pipeline_id)
+            self.running_pipeline = pipeline_id
+
+        # DEBUG
+        for p in self.pipelines.values():
+            print(json.dumps(p, indent=4, default=str))
