@@ -1,0 +1,29 @@
+{
+    "dataset": {
+        "type": "tabular|image",
+        "n_samples": 1,
+        "n_features": 1,
+        "n_classes": 1,
+        "train_percentage": 0.8,
+        "val_percentage": 0.1,
+        "test_percentage": 0.1,
+        "input_shape": [1, 1, 1]
+    },
+    "components_type": {
+        "my_preprocessing_1": "preprocessing|model_training|model_evaluation",
+        "my_preprocessing_2": "preprocessing|model_training|model_evaluation",
+        "my_model_training": "preprocessing|model_training|model_evaluation",
+        "model_evaluation": "preprocessing|model_training|model_evaluation"
+    },
+    "model": {
+        "framework": "sklearn|tensorflow|pytorch",
+        "type": "classification|regression",
+        "family": "tree|linear|ensemble|nn|cnn",
+        "n_conv_layers": 1,
+        "n_dense_layers": 1,
+        "total_parameters": 1,
+        "trainable_parameters": 1,
+        "epochs": 1,
+        "batch_size": 1
+    }
+}

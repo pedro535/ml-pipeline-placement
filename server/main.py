@@ -4,7 +4,7 @@ from fastapi import FastAPI, UploadFile
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from server import PipelineManager, PlacementDecisionUnit, NodeManager
+from server import PipelineManager, PlacementDecisionUnit, NodeManager, DataManager
 from server.settings import (
     WAIT_INTERVAL,
     UPDATE_INTERVAL,
@@ -17,6 +17,7 @@ from server.settings import (
 nmanager = NodeManager()
 pdunit = PlacementDecisionUnit(nmanager)
 pmanager = PipelineManager(pdunit)
+dmanager = DataManager()
 scheduler = BackgroundScheduler()
 
 @asynccontextmanager

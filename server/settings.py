@@ -15,6 +15,7 @@ UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", "5"))
 NODE_EXPORTER_PORT = int(os.getenv("NODE_EXPORTER_PORT", "9100"))
 PIPELINE_FILENAME = "pipeline.py"
 METADATA_FILENAME = "metadata.json"
+DATASETS_PATH = os.getenv("DATASETS_PATH")
 
 pipelines_dir = Path(PIPELINES_DIR).resolve()
 pipelines_dir.mkdir(parents=True, exist_ok=True)
