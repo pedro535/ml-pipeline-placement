@@ -73,7 +73,7 @@ async def upload_file(
 
     # Save metadata file
     with open(path / METADATA_FILENAME, "wb") as f:
-        content = await pipeline.read()
+        content = await metadata.read()
         f.write(content)
 
     # Register pipeline
