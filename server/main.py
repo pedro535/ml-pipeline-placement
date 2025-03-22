@@ -48,6 +48,15 @@ def handle_root():
     }
 
 
+@app.get("/datasets/update/")
+def update_datasets():
+    dmanager.update_datasets()
+    return {
+        "status": "success",
+        "message": "Dataset updated successfully",
+    }
+
+
 @app.post("/submit/")
 async def upload_file(
     components: List[UploadFile],
