@@ -1,0 +1,2 @@
+pre-processed: https://www.kaggle.com/datasets/wenruliu/adult-income-dataset/data
+original: https://archive.ics.uci.edu/dataset/2/adult
