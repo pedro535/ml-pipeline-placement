@@ -7,6 +7,7 @@ data/german_traffic_signs/Meta.csv
 data/german_traffic_signs/Test.csv
 data/german_traffic_signs/Train.csv
 data/adult_income/adult.csv
+data/kddcup99/kddcup.data_10_percent
 
 # Others
 tmp/
