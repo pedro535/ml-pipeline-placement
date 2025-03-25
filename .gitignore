@@ -8,6 +8,8 @@ data/german_traffic_signs/Test.csv
 data/german_traffic_signs/Train.csv
 data/adult_income/adult.csv
 data/kddcup99/kddcup.data_10_percent
+data/UNSW-NB15/UNSW_NB15.csv
+
 
 # Others
 tmp/
