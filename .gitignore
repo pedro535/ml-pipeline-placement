@@ -8,7 +8,7 @@ data/german_traffic_signs/Test.csv
 data/german_traffic_signs/Train.csv
 data/adult_income/adult.csv
 data/kddcup99/kddcup.data_10_percent
-data/UNSW-NB15/UNSW_NB15.csv
+data/UNSW_NB15/UNSW_NB15.csv
 data/california/california.csv
 data/CIFAR_10/cifar10_x.npy
 data/CIFAR_10/cifar10_y.npy
