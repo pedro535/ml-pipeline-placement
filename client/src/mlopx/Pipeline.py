@@ -76,7 +76,7 @@ class Pipeline:
         ]
 
         # Metadata file
-        files.append(("metadata", (self.metadata_file, open(self.metadata_file, "rb"))))
+        files.append(("metadata", ("metadata.json", open(self.metadata_file, "rb"))))
 
         # Pipeline file
         tmp_file = f"tmp_{self.pipeline_file}"
