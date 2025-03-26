@@ -5,11 +5,11 @@ Placement system for ML pipelines on heterogeneous environments.
 To upload a dataset to the NFS server, first the dataset must be in a folder in the ```data/``` directory. Then, run the following command:
 
 ```bash
-./nfs.sh upload <dataset_folder>
+.utils/nfs.sh upload <dataset_folder>
 ```
 
 To remove a dataset from the NFS server, run the following command:
 
 ```bash
-./nfs.sh remove <dataset_name>
+.utils/nfs.sh remove <dataset_name>
 ```
