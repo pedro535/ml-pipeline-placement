@@ -4,13 +4,13 @@ from data_preprocessing import data_preprocessing
 from model_training import model_training
 from model_evaluation import model_evaluation
 
-BASE_IMAGE = "registry.localhost/kfp_python_base:v1"
+BASE_IMAGE = "registry.localhost/kfp_tf_base:v1"
 
 component_1 = Component(
     func=data_preprocessing,
     image=BASE_IMAGE,
     args={
-        "dataset_path": "/mnt/datasets/adult_income/adult.csv"
+        "dataset_path": "/mnt/datasets/MNIST"
     }
 )
 
@@ -31,6 +31,6 @@ component_3 = Component(
     args={}
 )
 
-pipeline = Pipeline(name="adult_income_dt", metadata_file="metadata.json")
+pipeline = Pipeline(name="mnist_nn", metadata_file="metadata.json")
 pipeline.add([component_1, component_2, component_3])
 pipeline.submit("http://127.0.0.1:8000")

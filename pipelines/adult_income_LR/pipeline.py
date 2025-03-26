@@ -31,6 +31,6 @@ component_3 = Component(
     args={}
 )
 
-pipeline = Pipeline(name="adult_income", metadata_file="metadata.json")
+pipeline = Pipeline(name="adult_income_lr", metadata_file="metadata.json")
 pipeline.add([component_1, component_2, component_3])
 pipeline.submit("http://127.0.0.1:8000")

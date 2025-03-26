@@ -31,6 +31,6 @@ component_3 = Component(
     args={}
 )
 
-pipeline = Pipeline(name="kddcup99", metadata_file="metadata.json")
+pipeline = Pipeline(name="kddcup99_rf", metadata_file="metadata.json")
 pipeline.add([component_1, component_2, component_3])
 pipeline.submit("http://127.0.0.1:8000")

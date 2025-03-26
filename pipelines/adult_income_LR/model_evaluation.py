@@ -13,14 +13,14 @@ def model_evaluation(
     from sklearn.metrics import accuracy_score, f1_score, precision_score
 
     # Load data
-    X_test = np.load(x_test_ds.path)
+    x_test = np.load(x_test_ds.path)
     y_test = np.load(y_test_ds.path)
 
     # Load model
     model = joblib.load(model_artifact.path)
 
     # Evaluate model
-    y_pred = model.predict(X_test)
+    y_pred = model.predict(x_test)
     
     metrics = {
         "accuracy": accuracy_score(y_test, y_pred),
