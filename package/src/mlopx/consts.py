@@ -30,5 +30,3 @@ ARGPARSE_CODE = [
     "parser.add_argument('-p', nargs='+', help='Placement', required=True)",
     "args = parser.parse_args()"
 ]
-
-METADATA_FILENAME = "metadata.json"

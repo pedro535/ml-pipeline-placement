@@ -20,6 +20,6 @@ c2 = Component(
     }
 )
 
-pipeline = Pipeline(name="simple_pipeline")
+pipeline = Pipeline(name="simple_pipeline", metadata_file="metadata.json")
 pipeline.add([c1, c2])
 pipeline.submit("http://127.0.0.1:8000")

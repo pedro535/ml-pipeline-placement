@@ -2,22 +2,34 @@ import os
 import requests
 import ast
 import astor
+import inspect
 import black
-from pathlib import Path
 from typing import List, Tuple
 
 from mlopx import Component, PipelineBuilder
-from mlopx.consts import ARGPARSE_CODE, METADATA_FILENAME
+from mlopx.consts import ARGPARSE_CODE
 
 
 class Pipeline:
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, metadata_file: str):
         self.name = name
+        self.metadata_file = metadata_file
         self.func_name = name.replace(" ", "_").lower()
         self.components = []
         self.artifacts = {}
         self.tree = None
+        self.pipeline_file = self.get_pipeline_file()
+
+    
+    def get_pipeline_file(self) -> str:
+        """
+        Get the pipeline filename
+        """
+        stack = inspect.stack()
+        caller_frame = stack[-1]
+        caller_filename = caller_frame.filename
+        return caller_filename.split("/")[-1]
 
 
     def add(self, components: List[Component]) -> None:
@@ -35,7 +47,7 @@ class Pipeline:
         """
         Create a temporary pipeline file to be submitted
         """
-        with open("pipeline.py", "r") as f:
+        with open(self.pipeline_file, "r") as f:
             code = f.read()
             tree = ast.parse(code)
 
@@ -64,12 +76,10 @@ class Pipeline:
         ]
 
         # Metadata file
-        if METADATA_FILENAME not in os.listdir():
-            raise FileNotFoundError("You must have a metadata.json file in the current directory")
-        files.append(("metadata", (METADATA_FILENAME, open(METADATA_FILENAME, "rb"))))
+        files.append(("metadata", (self.metadata_file, open(self.metadata_file, "rb"))))
 
         # Pipeline file
-        tmp_file = "pipeline_tmp.py"
+        tmp_file = f"tmp_{self.pipeline_file}"
         self.create_tmp_pipeline(tmp_file)
         files.append(("pipeline", ("pipeline.py", open(tmp_file, "rb"))))
         os.remove(tmp_file)
