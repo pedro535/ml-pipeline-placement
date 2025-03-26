@@ -10,10 +10,10 @@ data/adult_income/adult.csv
 data/kddcup99/kddcup.data_10_percent
 data/UNSW_NB15/UNSW_NB15.csv
 data/california/california.csv
-data/CIFAR_10/cifar10_x.npy
-data/CIFAR_10/cifar10_y.npy
-data/MNIST/mnist_x.npy
-data/MNIST/mnist_y.npy
+data/CIFAR_10/x.npy
+data/CIFAR_10/y.npy
+data/MNIST/x.npy
+data/MNIST/y.npy
 
 
 # Others
