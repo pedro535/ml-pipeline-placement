@@ -22,9 +22,7 @@ component_1.mount_volume(
 component_2 = Component(
     image=BASE_IMAGE, 
     func=model_training,
-    args={
-        "model_type": "logistic_regression"
-    }
+    args={}
 )
 
 component_3 = Component(
@@ -33,6 +31,6 @@ component_3 = Component(
     args={}
 )
 
-pipeline = Pipeline(name="adult_income", metadata_file="metadata_LR.json")
+pipeline = Pipeline(name="adult_income", metadata_file="metadata.json")
 pipeline.add([component_1, component_2, component_3])
 pipeline.submit("http://127.0.0.1:8000")
