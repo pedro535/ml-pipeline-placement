@@ -29,7 +29,7 @@ def model_evaluation(
     
     metrics = {
         "accuracy": accuracy_score(y_test, y_pred),
-        "f1_score": f1_score(y_test, y_pred),
-        "precision": precision_score(y_test, y_pred)
+        "f1_score": f1_score(y_test, y_pred, average="weighted"),
+        "precision": precision_score(y_test, y_pred, average="weighted")
     }
     return metrics
