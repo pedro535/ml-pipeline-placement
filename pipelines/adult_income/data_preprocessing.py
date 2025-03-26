@@ -27,7 +27,7 @@ def data_preprocessing(
         df[col] = df[col].clip(lower=lower_limit, upper=upper_limit)  
         return df
 
-
+    # Load dataset
     df = pd.read_csv(dataset_path)
 
     # Handle missing values
