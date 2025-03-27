@@ -15,6 +15,23 @@ data/CIFAR_10/y.npy
 data/MNIST/x.npy
 data/MNIST/y.npy
 
+# Notebooks with pipelines
+pipelines/adult_income/DT/pipeline.ipynb
+pipelines/adult_income/RF/pipeline.ipynb
+pipelines/adult_income/LR/pipeline.ipynb
+
+pipelines/CIFAR_10/NN1/pipeline.ipynb
+pipelines/CIFAR_10/NN2/pipeline.ipynb
+
+pipelines/kddcup99/RF/pipeline.ipynb
+pipelines/kddcup99/SVM/pipeline.ipynb
+
+pipelines/MNIST/LR/pipeline.ipynb
+pipelines/MNIST/NN/pipeline.ipynb
+
+pipelines/UNSW_NB15/MLP/pipeline.ipynb
+pipelines/UNSW_NB15/RF/pipeline.ipynb
+pipelines/UNSW_NB15/SVM/pipeline.ipynb
 
 # Others
 tmp/
