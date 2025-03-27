@@ -17,7 +17,7 @@ def model_training(
     y_train = np.load(y_train_ds.path)
 
     # Train model
-    model = LogisticRegression(max_iter=1000, solver='lbfgs')
+    model = LogisticRegression(max_iter=1000, solver='lbfgs', n_jobs=-1)
     model.fit(x_train, y_train)
 
     # Save model

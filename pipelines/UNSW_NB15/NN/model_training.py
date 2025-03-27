@@ -20,7 +20,7 @@ def model_training(
 
     # Define model
     input_shape = (x_train.shape[1],)
-    classes = len(y.unique())
+    n_classes = 2
 
     model = keras.Sequential([
         # input layer
@@ -31,7 +31,7 @@ def model_training(
         keras.layers.Dense(64, activation='relu'),
         keras.layers.Dropout(0.25),
         # output layer
-        keras.layers.Dense(classes, activation='softmax')
+        keras.layers.Dense(n_classes, activation='softmax')
     ])
 
     model.compile(
@@ -42,11 +42,7 @@ def model_training(
 
     # Model training
     with tf.device(device):
-        model.fit(
-            x_train, y_train,
-            epochs=10,
-            batch_size=32
-        )
+        model.fit(x_train, y_train, epochs=10, batch_size=32)
 
     # Save model
     model.save(model_artifact.path + "/model.h5")

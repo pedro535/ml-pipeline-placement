@@ -1,0 +1,32 @@
+{
+    "components": {
+        "data_preprocessing": "preprocessing",
+        "model_training": "training",
+        "model_evaluation": "evaluation"
+    },
+    "dataset": {
+        "name": "CIFAR_10",
+        "type": "image",
+        "train_percentage": 0.8,
+        "val_percentage": 0,
+        "test_percentage": 0.2,
+        "original": {
+            "n_samples": 60000,
+            "input_shape": [32, 32, 3],
+            "n_classes": 10
+        },
+        "preprocessed": {
+            "n_samples": 60000,
+            "input_shape": [32, 32, 3],
+            "n_classes": 10
+        }
+    },
+    "model": {
+        "type" : "cnn",
+        "parameters" : {
+            "n_parameters": 356810,
+            "n_epochs": 10,
+            "batch_size": 64
+        }
+    }
+}

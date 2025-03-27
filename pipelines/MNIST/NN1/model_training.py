@@ -39,7 +39,7 @@ def model_training(
 
     # Train the model
     with tf.device(device):
-        model.fit(x_train, y_train, epochs=5)
+        model.fit(x_train, y_train, epochs=10, batch_size=32)
 
     # Save model
     model.save(model_artifact.path + "/model.h5")

@@ -1,0 +1,30 @@
+{
+    "components": {
+        "data_preprocessing": "preprocessing",
+        "model_training": "training",
+        "model_evaluation": "evaluation"
+    },
+    "dataset": {
+        "name": "MNIST",
+        "type": "image",
+        "train_percentage": 0.8,
+        "val_percentage": 0,
+        "test_percentage": 0.2,
+        "original": {
+            "n_samples": 70000,
+            "n_features": 784,
+            "n_classes": 10
+        },
+        "preprocessed": {
+            "n_samples": 70000,
+            "n_features": 784,
+            "n_classes": 10
+        }
+    },
+    "model": {
+        "type" : "logistic_regression",
+        "parameters" : {
+            "n_iter": 1000
+        }
+    }
+}
