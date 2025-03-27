@@ -1,17 +1,17 @@
 from mlopx.artifacts import InputModel, InputDataset
-from typing import Dict
+from typing import Dict, Any
 
 
 def model_evaluation(
     model_artifact: InputModel,
     x_test_ds: InputDataset,
     y_test_ds: InputDataset
-) -> Dict[str, float]:
+) -> Dict[str, Any]:
 
     import numpy as np
     import tensorflow as tf
     import keras
-    from sklearn.metrics import accuracy_score, f1_score, precision_score
+    from sklearn.metrics import accuracy_score, f1_score, precision_score, confusion_matrix
 
     device = "/GPU:0" if tf.config.list_physical_devices("GPU") else "/CPU:0"
 
@@ -30,6 +30,7 @@ def model_evaluation(
     metrics = {
         "accuracy": accuracy_score(y_test, y_pred),
         "f1_score": f1_score(y_test, y_pred, average="weighted"),
-        "precision": precision_score(y_test, y_pred, average="weighted")
+        "precision": precision_score(y_test, y_pred, average="weighted"),
+        "confusion_matrix": confusion_matrix(y_test, y_pred).tolist()
     }
     return metrics

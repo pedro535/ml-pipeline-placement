@@ -10,7 +10,6 @@ def model_training(
     import numpy as np
     import tensorflow as tf
     import keras
-    from keras import layers
 
     device = "/GPU:0" if tf.config.list_physical_devices("GPU") else "/CPU:0"
 
@@ -24,13 +23,14 @@ def model_training(
     input_shape = (28, 28, 1)
 
     model = keras.Sequential([
-        layers.Conv2D(32, (3,3), activation='relu', input_shape=input_shape),
-        layers.MaxPooling2D(2,2),
-        layers.Conv2D(64, (3,3), activation='relu'),
-        layers.MaxPooling2D(2,2),
-        layers.Flatten(),
-        layers.Dense(128, activation='relu'),
-        layers.Dense(n_classes, activation='softmax')
+        keras.layers.Input(shape=input_shape),
+        keras.layers.Conv2D(32, (3,3), activation='relu'),
+        keras.layers.MaxPooling2D(2,2),
+        keras.layers.Conv2D(64, (3,3), activation='relu'),
+        keras.layers.MaxPooling2D(2,2),
+        keras.layers.Flatten(),
+        keras.layers.Dense(128, activation='relu'),
+        keras.layers.Dense(n_classes, activation='softmax')
     ])
 
     # Compile the model
