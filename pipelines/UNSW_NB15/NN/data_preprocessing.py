@@ -20,15 +20,13 @@ def data_preprocessing(
 
     # Load dataset
     df = pd.read_csv(dataset_path)
+    df = df.drop(labels=["id", "attack_cat"], axis=1)
+    df = df.dropna()
 
     # Extract categorical and numerical columns
     categorical_cols = df.select_dtypes(include=['object']).columns
-    categorical_cols = categorical_cols.drop('attack_cat')
     numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
-    numeric_cols = numeric_cols.drop(labels=['id', 'label'])
-
-    # Drop id column
-    df = df.drop(columns=['id'])
+    numeric_cols = numeric_cols.drop(['label'])
 
     # Encode categorical variables
     for col in categorical_cols:
@@ -37,12 +35,12 @@ def data_preprocessing(
             df[col] = label_encoder.fit_transform(df[col])
 
     # Drop label column
-    x = df.drop(['attack_cat', 'label'], axis=1)
+    x = df.drop(['label'], axis=1)
     y = df['label']
 
     # Split the dataset
     x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.2, random_state=42, stratify=y
+        x, y, test_size=0.2, shuffle=True, random_state=42, stratify=y
     )
 
     # Apply standard scaling to numeric columns
