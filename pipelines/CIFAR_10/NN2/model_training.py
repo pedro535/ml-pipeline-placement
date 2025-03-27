@@ -24,7 +24,8 @@ def model_training(
     n_classes = 10
     
     model = keras.Sequential([
-        layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+        layers.Input(shape=input_shape),
+        layers.Conv2D(32, (3, 3), activation='relu'),
         layers.Conv2D(32, (3, 3), activation='relu'),
         layers.MaxPooling2D((2, 2)),
         layers.Dropout(0.25),
