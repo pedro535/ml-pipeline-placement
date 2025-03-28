@@ -27,9 +27,10 @@ pipelines/kddcup99/RF/pipeline.ipynb
 pipelines/kddcup99/SVM/pipeline.ipynb
 
 pipelines/MNIST/LR/pipeline.ipynb
-pipelines/MNIST/NN/pipeline.ipynb
+pipelines/MNIST/NN1/pipeline.ipynb
+pipelines/MNIST/NN2/pipeline.ipynb
 
-pipelines/UNSW_NB15/MLP/pipeline.ipynb
+pipelines/UNSW_NB15/NN/pipeline.ipynb
 pipelines/UNSW_NB15/RF/pipeline.ipynb
 pipelines/UNSW_NB15/SVM/pipeline.ipynb
 
