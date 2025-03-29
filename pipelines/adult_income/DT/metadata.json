@@ -23,7 +23,7 @@
     },
     "model": {
         "type" : "decision_tree",
-        "parameters" : {
+        "params" : {
             "max_depth" : 10
         }
     }

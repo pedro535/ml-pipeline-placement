@@ -23,7 +23,7 @@
     },
     "model": {
         "type" : "nn",
-        "parameters" : {
+        "params" : {
             "n_parameters": 101770,
             "n_epochs": 10,
             "batch_size": 32

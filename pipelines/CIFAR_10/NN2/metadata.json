@@ -23,7 +23,7 @@
     },
     "model": {
         "type" : "cnn",
-        "parameters" : {
+        "params" : {
             "n_parameters": 1342250,
             "n_epochs": 10,
             "batch_size": 64

@@ -23,7 +23,7 @@
     },
     "model": {
         "type" : "svm",
-        "parameters" : {
+        "params" : {
             "kernel" : "linear",
             "n_iter" : 1000
         }

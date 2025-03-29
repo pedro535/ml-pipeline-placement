@@ -4,7 +4,7 @@
 
 ```json
 {
-    "components": {
+    "components_type": {
         "my_component_1": "preprocessing | training| evaluation",
         "my_component_2": "preprocessing | training | evaluation",
         "my_component_3": "preprocessing | training | evaluation"
@@ -41,11 +41,11 @@ Linear model using OLS (Ordinary Least Squares)
 
 ```json
 {
-    "components": {...},
+    "components_type": {...},
     "dataset": {...},
     "model" : {
         "type" : "linear_regression",
-        "parameters" : {
+        "params" : {
             "solver" : "ols"
         }
     }
@@ -56,11 +56,11 @@ Linear model with SGD (Stochastic Gradient Descent)
 
 ```json
 {
-    "components": {...},
+    "components_type": {...},
     "dataset": {...},
     "model" : {
         "type" : "linear_regression",
-        "parameters" : {
+        "params" : {
             "solver" : "sgd",
             "n_iter" : 1,
         }
@@ -74,11 +74,11 @@ The complexity estimator assumes the model is using OvR for multiclass classific
 
 ```json
 {
-    "components": {...},
+    "components_type": {...},
     "dataset": {...},
     "model" : {
         "type" : "logistic_regression",
-        "parameters" : {
+        "params" : {
             "n_iter" : 1
         }
     }
@@ -89,11 +89,11 @@ The complexity estimator assumes the model is using OvR for multiclass classific
 
 ```json
 {
-    "components": {...},
+    "components_type": {...},
     "dataset": {...},
     "model" : {
         "type" : "decision_tree",
-        "parameters" : {
+        "params" : {
             "max_depth" : "int | null"
         }
     }
@@ -104,11 +104,11 @@ The complexity estimator assumes the model is using OvR for multiclass classific
 
 ```json
 {
-    "components": {...},
+    "components_type": {...},
     "dataset": {...},
     "model" : {
         "type" : "random_forest",
-        "parameters" : {
+        "params" : {
             "n_estimators" : 123,
             "max_depth" : "int | null"
         }
@@ -120,11 +120,11 @@ The complexity estimator assumes the model is using OvR for multiclass classific
 
 ```json
 {
-    "components": {...},
+    "components_type": {...},
     "dataset": {...},
     "model" : {
         "type" : "svm",
-        "parameters" : {
+        "params" : {
             "kernel" : "linear | nonlinear",
             "n_iter" : 123,
             "n_support_vectors" : 123
@@ -137,11 +137,11 @@ The complexity estimator assumes the model is using OvR for multiclass classific
 
 ```json
 {
-    "components": {...},
+    "components_type": {...},
     "dataset": {...},
     "model" : {
         "type" : "nn",
-        "parameters" : {
+        "params" : {
             "n_parameters" : 123,
             "n_epochs" : 123,
             "batch_size" : 123
@@ -154,11 +154,11 @@ The complexity estimator assumes the model is using OvR for multiclass classific
 
 ```json
 {
-    "components": {...},
+    "components_type": {...},
     "dataset": {...},
     "model" : {
         "type" : "cnn",
-        "parameters" : {
+        "params" : {
             "n_parameters" : 123,
             "n_epochs" : 123,
             "batch_size" : 123
@@ -171,11 +171,11 @@ The complexity estimator assumes the model is using OvR for multiclass classific
 
 ```json
 {
-    "components": {...},
+    "components_type": {...},
     "dataset": {...},
     "model" : {
         "type" : "other",
-        "parameters" : {}
+        "params" : {}
     }
 }
 ```

@@ -23,7 +23,7 @@
     },
     "model": {
         "type" : "logistic_regression",
-        "parameters" : {
+        "params" : {
             "n_iter": 1000
         }
     }
