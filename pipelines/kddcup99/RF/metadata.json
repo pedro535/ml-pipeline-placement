@@ -1,5 +1,5 @@
 {
-    "components": {
+    "components_type": {
         "data_preprocessing": "preprocessing",
         "model_training": "training",
         "model_evaluation": "evaluation"
