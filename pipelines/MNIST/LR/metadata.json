@@ -12,12 +12,12 @@
         "test_percentage": 0.2,
         "original": {
             "n_samples": 70000,
-            "n_features": 784,
+            "input_shape": [28, 28, 1],
             "n_classes": 10
         },
         "preprocessed": {
             "n_samples": 70000,
-            "n_features": 784,
+            "input_shape": [28, 28, 1],
             "n_classes": 10
         }
     },
