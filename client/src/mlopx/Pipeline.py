@@ -4,6 +4,7 @@ import ast
 import astor
 import inspect
 import black
+import json
 from typing import List, Tuple
 
 from mlopx import Component, PipelineBuilder
@@ -65,6 +66,22 @@ class Pipeline:
             kfp_pipeline = black.format_str(kfp_pipeline, mode=black.Mode())
             f.write(kfp_pipeline)
 
+    
+    def create_tmp_metadata(self, tmp_filename: str) -> None:
+        """
+        Create a temporary metadata file with normalized component names
+        """
+        with open(self.metadata_file, "r") as f:
+            metadata = json.load(f)
+
+            components = list(metadata["components_type"].keys())
+            for c in components:
+                metadata["components_type"][c.lower().replace("_", "-")] = metadata["components_type"][c]
+                del metadata["components_type"][c]
+
+        with open(tmp_filename, "w") as f:
+            json.dump(metadata, f, indent=4)
+
 
     def prepare_files(self) -> List[Tuple]:
         """
@@ -76,7 +93,10 @@ class Pipeline:
         ]
 
         # Metadata file
-        files.append(("metadata", ("metadata.json", open(self.metadata_file, "rb"))))
+        tmp_file = f"tmp_{self.metadata_file}"
+        self.create_tmp_metadata(tmp_file)
+        files.append(("metadata", ("metadata.json", open(tmp_file, "rb"))))
+        os.remove(tmp_file)
 
         # Pipeline file
         tmp_file = f"tmp_{self.pipeline_file}"
