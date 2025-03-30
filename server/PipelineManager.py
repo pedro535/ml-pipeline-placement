@@ -1,23 +1,23 @@
 from datetime import datetime
 from dateutil import tz
 from queue import Queue
-from typing import List, Dict, Tuple
+from typing import List, Dict
 import subprocess
 from kfp import Client
 import json
 
-from server import PlacementDecisionUnit
-from server.settings import KFP_URL, ENABLE_CACHING, pipelines_dir
+from server import DecisionUnit
+from server.settings import KFP_URL, ENABLE_CACHING, METADATA_FILENAME, pipelines_dir
 
 
 class PipelineManager:
 
-    def __init__(self, pdunit: PlacementDecisionUnit):
+    def __init__(self, decision_unit: DecisionUnit):
         self.kfp_url = KFP_URL
         self.enable_caching = ENABLE_CACHING
         self.dir = pipelines_dir
         self.kfp_client = Client(host=self.kfp_url)
-        self.pdunit = pdunit
+        self.decision_unit = decision_unit
         self.pipelines = {}
         self.submission_queue = Queue()
         self.execution_queue = Queue()
@@ -33,6 +33,7 @@ class PipelineManager:
         component_names = [c.split(".")[0].lower().replace("_", "-") for c in component_files]
         self.pipelines[pipeline_id] = {
             "components": {},
+            "total_effort": None,
             "state": "QUEUED",
             "kfp_id": None,
             "scheduled_at": None,
@@ -45,6 +46,7 @@ class PipelineManager:
             self.pipelines[pipeline_id]["components"][c] = {
                 "file": component_files[i],
                 "node": None,
+                "effort": None,
                 "start_time": None,
                 "end_time": None,
                 "duration": None,
@@ -52,22 +54,15 @@ class PipelineManager:
             }
 
     
-    def analyse_pipeline(self, pipeline_id: str):
-        pipeline = self.pipelines[pipeline_id]
-        analisys = {c: {} for c in pipeline["components"]}
-        # PERFORM THE ANALYSIS HERE
-        return analisys
-
-    
-    def build_pipeline(self, pipeline_id: str, placement: List[Tuple[str, str]]):
+    def build_pipeline(self, pipeline_id: str, mapping: Dict[str, str]):
         """
         Build the kfp pipeline
         """
         path = self.dir / pipeline_id / "pipeline.py"
         args = ["python3", path, "-u", self.kfp_url, "-p"]
 
-        for _, node in placement:
-            args.append(node)
+        for component in self.pipelines[pipeline_id]["components"]:
+            args.append(mapping[component])
 
         if self.enable_caching:
             args.append("-c")
@@ -109,18 +104,40 @@ class PipelineManager:
         if self.submission_queue.empty():
             return
         
-        analyses = {}
+        pipelines_to_place = []
         while not self.submission_queue.empty():
             pipeline_id = self.submission_queue.get()
-            analyses[pipeline_id] = self.analyse_pipeline(pipeline_id)
 
-        placements = self.pdunit.get_placements(analyses)
+            with open(self.dir / pipeline_id / METADATA_FILENAME, "r") as f:
+                metadata = json.load(f)
+                
+            # Rename component names
+            components = list(metadata["components_type"].keys())
+            for c in components:
+                metadata["components_type"][c.lower().replace("_", "-")] = metadata["components_type"][c]
+                del metadata["components_type"][c]
+            
+            pipeline_details = {
+                "pipeline": pipeline_id,
+                "components": list(
+                    self.pipelines[pipeline_id]["components"].keys()
+                ),
+                "metadata": metadata
+            }
+            pipelines_to_place.append(pipeline_details)
+    
+        placements = self.decision_unit.get_placements(pipelines_to_place)
+
         for placement in placements:
             pipeline_id = placement["pipeline_id"]
             mapping = placement["mapping"]
+            efforts = placement["efforts"]
 
-            for c, node in mapping:
+            for c, node in mapping.items():
                 self.pipelines[pipeline_id]["components"][c]["node"] = node
+                self.pipelines[pipeline_id]["components"][c]["effort"] = efforts[c]
+            
+            self.pipelines[pipeline_id]["total_effort"] = efforts["total"]  # DEBUG
             
             self.build_pipeline(pipeline_id, mapping)
             self.execution_queue.put(pipeline_id)
@@ -162,8 +179,10 @@ class PipelineManager:
         if self.running_pipeline is not None:
             pipeline = self.pipelines[self.running_pipeline]
             run_details = self.kfp_client.get_run(pipeline["kfp_id"]).to_dict()
+
             self.update_component_details(pipeline, run_details["run_details"]["task_details"])
             self.update_pipeline_details(pipeline, run_details)
+            
             if pipeline["state"] in ["SUCCEEDED", "FAILED"]:
                 self.running_pipeline = None
 
@@ -173,5 +192,19 @@ class PipelineManager:
             self.running_pipeline = pipeline_id
 
         # DEBUG
-        for p in self.pipelines.values():
-            print(json.dumps(p, indent=4, default=str))
+        # for p in self.pipelines.values():
+        #     print(json.dumps(p, indent=4, default=str))
+
+
+    def dump_pipelines(self):
+        """
+        Dump the pipeline details to a file
+        """
+        # sort pipelines by total effort
+        pipelines = dict(
+            sorted(self.pipelines.items(), key=lambda item: item[1]["total_effort"])
+        )
+        
+        with open(self.dir / "pipelines.json", "w") as f:
+            json.dump(pipelines, f, indent=4, default=str)
+        print("Pipeline details dumped to pipelines.json")

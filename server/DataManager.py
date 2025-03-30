@@ -57,3 +57,13 @@ class DataManager:
         """
         created_at_timestamp = os.path.getmtime(folder)
         return datetime.fromtimestamp(created_at_timestamp)
+    
+
+    def get_dataset_size(self, dataset):
+        """
+        Get the size of a dataset.
+        """
+        if dataset in self.datasets:
+            return self.datasets[dataset]["size"]
+        else:
+            return None

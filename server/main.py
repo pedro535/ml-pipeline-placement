@@ -4,7 +4,7 @@ from fastapi import FastAPI, UploadFile
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from server import PipelineManager, PlacementDecisionUnit, NodeManager, DataManager
+from server import PipelineManager, DecisionUnit, NodeManager, DataManager
 from server.settings import (
     WAIT_INTERVAL,
     UPDATE_INTERVAL,
@@ -14,27 +14,28 @@ from server.settings import (
 )
 
 
-nmanager = NodeManager()
-pdunit = PlacementDecisionUnit(nmanager)
-pmanager = PipelineManager(pdunit)
-dmanager = DataManager()
+node_manager = NodeManager()
+data_manager = DataManager()
+decision_unit = DecisionUnit(node_manager, data_manager)
+pipeline_manager = PipelineManager(decision_unit)
 scheduler = BackgroundScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler.add_job(
-        func=pmanager.process_pipelines,
+        func=pipeline_manager.process_pipelines,
         trigger="interval",
         seconds=WAIT_INTERVAL,
     )
     scheduler.add_job(
-        func=pmanager.update_running_pipeline,
+        func=pipeline_manager.update_running_pipeline,
         trigger="interval",
         seconds=UPDATE_INTERVAL,
     )
     scheduler.start()
     yield
     scheduler.shutdown()
+    pipeline_manager.dump_pipelines()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -53,7 +54,7 @@ def update_datasets():
     dmanager.update_datasets()
     return {
         "status": "success",
-        "message": "Dataset updated successfully",
+        "message": "Datasets updated successfully",
     }
 
 
@@ -86,7 +87,7 @@ async def upload_file(
         f.write(content)
 
     # Register pipeline
-    pmanager.add_pipeline(
+    pipeline_manager.add_pipeline(
         pipeline_id=pipeline_id,
         component_files=component_files
     )
