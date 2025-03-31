@@ -9,8 +9,6 @@ def model_training(
     
     import joblib
     import numpy as np
-    from sklearn.neural_network import MLPClassifier
-    from sklearn.svm import LinearSVC
     from sklearn.ensemble import RandomForestClassifier
 
 
@@ -19,7 +17,7 @@ def model_training(
     y_train = np.load(y_train_ds.path)
 
     # Train model
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42)
     model.fit(x_train, y_train)
 
     # Save model

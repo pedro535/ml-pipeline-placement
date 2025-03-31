@@ -38,8 +38,10 @@ def model_training(
         layers.MaxPooling2D((2, 2)),
         layers.Dropout(0.25),
         layers.Flatten(),
-        layers.Dense(1024, activation=layers.LeakyReLU()),
-        layers.Dense(512, activation=layers.LeakyReLU()),
+        layers.Dense(1024),
+        layers.LeakyReLU(negative_slope=0.3),
+        layers.Dense(512),
+        layers.LeakyReLU(negative_slope=0.3),
         layers.Dense(n_classes, activation='softmax')
     ])
 

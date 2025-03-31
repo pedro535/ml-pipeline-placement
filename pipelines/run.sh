@@ -18,18 +18,6 @@ python pipeline.py
 sleep 0.5
 cd ../../
 
-# CIFAR-10
-cd CIFAR_10
-
-cd NN1
-python pipeline.py
-sleep 0.5
-cd ..
-
-cd NN2
-python pipeline.py
-sleep 0.5
-cd ../../
 
 # KDDCUP99
 cd kddcup99
@@ -44,23 +32,6 @@ python pipeline.py
 sleep 0.5
 cd ../../
 
-# MNIST
-cd MNIST
-
-cd LR
-python pipeline.py
-sleep 0.5
-cd ..
-
-cd NN1
-python pipeline.py
-sleep 0.5
-cd ..
-
-cd NN2
-python pipeline.py
-sleep 0.5
-cd ../../
 
 # UNSW_NB15
 cd UNSW_NB15
@@ -79,3 +50,36 @@ cd SVM
 python pipeline.py
 sleep 0.5
 cd ../../
+
+
+# MNIST
+cd MNIST
+
+cd LR
+python pipeline.py
+sleep 0.5
+cd ..
+
+cd NN1
+python pipeline.py
+sleep 0.5
+cd ..
+
+# cd NN2
+# python pipeline.py
+# sleep 0.5
+# cd ../../
+
+
+# # CIFAR-10
+# cd CIFAR_10
+
+# cd NN1
+# python pipeline.py
+# sleep 0.5
+# cd ..
+
+# cd NN2
+# python pipeline.py
+# sleep 0.5
+# cd ../../
