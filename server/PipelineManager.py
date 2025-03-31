@@ -1,7 +1,7 @@
 from datetime import datetime
 from dateutil import tz
 from queue import Queue
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import subprocess
 from kfp import Client
 import json
@@ -24,13 +24,12 @@ class PipelineManager:
         self.running_pipeline = None
 
 
-    def add_pipeline(self, pipeline_id: str, component_files: List[str]):
+    def add_pipeline(self, pipeline_id: str, components: List[Tuple[str, str]]):
         """
-        Add pipeline to the queue
+        Add pipeline to the submission queue
         """
         self.submission_queue.put(pipeline_id)
         
-        component_names = [c.split(".")[0].lower().replace("_", "-") for c in component_files]
         self.pipelines[pipeline_id] = {
             "components": {},
             "total_effort": None,
@@ -42,9 +41,9 @@ class PipelineManager:
             "last_update": None
         }
 
-        for i, c in enumerate(component_names):
-            self.pipelines[pipeline_id]["components"][c] = {
-                "file": component_files[i],
+        for filename, name in components:
+            self.pipelines[pipeline_id]["components"][name] = {
+                "file": filename,
                 "node": None,
                 "effort": None,
                 "start_time": None,
@@ -105,42 +104,28 @@ class PipelineManager:
             return
         
         pipelines_to_place = []
+        pipelines_metadata = {}
         while not self.submission_queue.empty():
             pipeline_id = self.submission_queue.get()
-
-            with open(self.dir / pipeline_id / METADATA_FILENAME, "r") as f:
-                metadata = json.load(f)
-                
-            # Rename component names
-            components = list(metadata["components_type"].keys())
-            for c in components:
-                metadata["components_type"][c.lower().replace("_", "-")] = metadata["components_type"][c]
-                del metadata["components_type"][c]
-            
-            pipeline_details = {
-                "pipeline": pipeline_id,
-                "components": list(
-                    self.pipelines[pipeline_id]["components"].keys()
-                ),
-                "metadata": metadata
-            }
-            pipelines_to_place.append(pipeline_details)
+            pipelines_metadata[pipeline_id] = self.get_metadata(pipeline_id)
+            components = list(self.pipelines[pipeline_id]["components"].keys())
+            pipelines_to_place.append((pipeline_id, components))
     
-        placements = self.decision_unit.get_placements(pipelines_to_place)
+        placements = self.decision_unit.get_placements(pipelines_to_place, pipelines_metadata)
 
-        for placement in placements:
-            pipeline_id = placement["pipeline_id"]
-            mapping = placement["mapping"]
-            efforts = placement["efforts"]
+        # for placement in placements:
+        #     pipeline_id = placement["pipeline_id"]
+        #     mapping = placement["mapping"]
+        #     efforts = placement["efforts"]
 
-            for c, node in mapping.items():
-                self.pipelines[pipeline_id]["components"][c]["node"] = node
-                self.pipelines[pipeline_id]["components"][c]["effort"] = efforts[c]
+        #     for c, node in mapping.items():
+        #         self.pipelines[pipeline_id]["components"][c]["node"] = node
+        #         self.pipelines[pipeline_id]["components"][c]["effort"] = efforts[c]
             
-            self.pipelines[pipeline_id]["total_effort"] = efforts["total"]  # DEBUG
+        #     self.pipelines[pipeline_id]["total_effort"] = efforts["total"]  # DEBUG
             
-            self.build_pipeline(pipeline_id, mapping)
-            self.execution_queue.put(pipeline_id)
+        #     self.build_pipeline(pipeline_id, mapping)
+        #     self.execution_queue.put(pipeline_id)
 
     
     def update_component_details(self, pipeline: Dict, task_details: List):
@@ -192,8 +177,22 @@ class PipelineManager:
             self.running_pipeline = pipeline_id
 
         # DEBUG
-        # for p in self.pipelines.values():
-        #     print(json.dumps(p, indent=4, default=str))
+        print("---" * 20)
+        print(f"Pipelines waiting for run: {self.execution_queue.qsize()}")
+
+        if self.running_pipeline is not None:
+            print(f"Pipeline running: {self.running_pipeline}")
+            print(json.dumps(self.pipelines[self.running_pipeline], indent=4, default=str))
+
+
+    def get_metadata(self, pipeline_id: str) -> Dict:
+        """
+        Get the metadata content of the pipeline
+        """
+        with open(self.dir / pipeline_id / METADATA_FILENAME, "r") as f:
+            metadata = json.load(f)
+        
+        return metadata
 
 
     def dump_pipelines(self):

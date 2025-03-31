@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import json
 
 from server import NodeManager, DataManager, MLEstimator
@@ -12,41 +12,38 @@ class DecisionUnit:
         self.estimator = MLEstimator()
 
 
-    def get_placements(self, pipelines: List[Dict]) -> List:
-        nodes = self.node_manager.get_nodes()
+    def get_placements(self, pipelines: List[Tuple], pipelines_metadata: Dict) -> List[Dict]:
         
         # Calculate computational effort for each pipeline and its components
-        computational_effort = self._calculate_computational_effort(pipelines)
-        # print(json.dumps(computational_effort, indent=4, default=str))
+        computational_effort = self.calculate_computational_effort(pipelines, pipelines_metadata)
 
         placements = []
-        node = "ml-worker-med-01"
-        for pipeline_id, efforts in computational_effort.items():
-            placement = {
+        for pipeline_id, components in pipelines:
+            placements.append({
                 "pipeline_id": pipeline_id,
-                "mapping": {c: node for c in efforts if c != "total"},
-                "efforts": efforts
-            }
-            placements.append(placement)
-        
-        placements = sorted(placements, key=lambda x: x["efforts"]["total"])
-        print(json.dumps(placements, indent=4, default=str))
-        return placements
-    
+                "mapping": {c: None for c in components},
+                "efforts": computational_effort[pipeline_id]["total"]
+            })
 
-    def _calculate_computational_effort(self, pipelines: List[Dict]) -> Dict:
+        # Scheduling (sort by total effort for now)
+        placements = sorted(placements, key=lambda x: x["efforts"]["total"])
+
+        # Placement
+        # TODO
+        
+        return placements
+
+
+    def calculate_computational_effort(self, pipelines: List[Tuple], pipelines_metadata: Dict) -> Dict:
         computational_effort = {}
         
-        for pipeline in pipelines:
-            pipeline_id = pipeline["pipeline"]
-            components = pipeline["components"]
-            metadata = pipeline["metadata"]
+        for pipeline_id, components in pipelines:
+            metadata = pipelines_metadata[pipeline_id]
             
             efforts = {}
             total_effort = 0
-            
             for component in components:
-                component_effort = self._get_effort(component, metadata)
+                component_effort = self.get_effort(component, metadata)
                 efforts[component] = component_effort
                 total_effort += component_effort
                 
@@ -56,13 +53,13 @@ class DecisionUnit:
         return computational_effort
 
 
-    def _get_effort(self, component: str, metadata: Dict) -> int:
+    def get_effort(self, component: str, metadata: Dict) -> int:
         component_type = metadata["components_type"][component]
         
         effort_calculators = {
-            "preprocessing": self._calculate_preprocessing_effort,
-            "training": self._calculate_training_effort,
-            "evaluation": self._calculate_evaluation_effort
+            "preprocessing": self.calculate_preprocessing_effort,
+            "training": self.calculate_training_effort,
+            "evaluation": self.calculate_evaluation_effort
         }
         
         if component_type in effort_calculators:
@@ -72,7 +69,7 @@ class DecisionUnit:
             return 0
 
 
-    def _calculate_preprocessing_effort(self, metadata: Dict) -> int:
+    def calculate_preprocessing_effort(self, metadata: Dict) -> int:
         n_samples = metadata["dataset"]["original"]["n_samples"]
         
         # Calculate the number of features based on dataset type
@@ -89,23 +86,23 @@ class DecisionUnit:
         return effort
 
 
-    def _calculate_training_effort(self, metadata: Dict) -> int:
-        return self._estimate_model_effort(
+    def calculate_training_effort(self, metadata: Dict) -> int:
+        return self.estimate_model_effort(
             metadata, 
             metadata["dataset"]["train_percentage"], 
             training=True
         )
 
 
-    def _calculate_evaluation_effort(self, metadata: Dict) -> int:
-        return self._estimate_model_effort(
+    def calculate_evaluation_effort(self, metadata: Dict) -> int:
+        return self.estimate_model_effort(
             metadata, 
             metadata["dataset"]["test_percentage"], 
             training=False
         )
     
 
-    def _estimate_model_effort(self, metadata: Dict, data_percentage: float, training: bool) -> int:
+    def estimate_model_effort(self, metadata: Dict, data_percentage: float, training: bool) -> int:
         model = metadata["model"]["type"]
         estimator_params = {}
         

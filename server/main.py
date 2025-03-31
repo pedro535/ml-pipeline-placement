@@ -51,7 +51,7 @@ def handle_root():
 
 @app.get("/datasets/update/")
 def update_datasets():
-    dmanager.update_datasets()
+    data_manager.update_datasets()
     return {
         "status": "success",
         "message": "Datasets updated successfully",
@@ -69,11 +69,14 @@ async def upload_file(
     path.mkdir(parents=True, exist_ok=True)
     
     # Save component files
-    component_files = []
+    components_info = []
     for file in components:
-        component_files.append(file.filename)
+        filename = file.filename
+        name = filename.split(".")[0].lower().replace("_", "-")
+        components_info.append((filename, name))
+
         content = await file.read()
-        with open(path / file.filename, "wb") as f:
+        with open(path / filename, "wb") as f:
             f.write(content)
 
     # Save pipeline file
@@ -89,7 +92,7 @@ async def upload_file(
     # Register pipeline
     pipeline_manager.add_pipeline(
         pipeline_id=pipeline_id,
-        component_files=component_files
+        components=components_info
     )
 
     response = {
