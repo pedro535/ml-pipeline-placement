@@ -4,7 +4,7 @@ from data_preprocessing import data_preprocessing
 from model_training import model_training
 from model_evaluation import model_evaluation
 
-BASE_IMAGE = "registry.localhost/kfp_tf_base:v1"
+BASE_IMAGE = "registry.localhost/kfp_tf_base"
 
 component_1 = Component(
     func=data_preprocessing,
