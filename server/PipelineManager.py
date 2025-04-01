@@ -53,15 +53,18 @@ class PipelineManager:
             }
 
     
-    def build_pipeline(self, pipeline_id: str, mapping: Dict[str, str]):
+    def build_pipeline(self, pipeline_id: str, mapping: Dict[str, Tuple[str, str]]):
         """
         Build the kfp pipeline
         """
         path = self.dir / pipeline_id / "pipeline.py"
-        args = ["python3", path, "-u", self.kfp_url, "-p"]
+        args = ["python3", path, "-u", self.kfp_url, "-m"]
 
+        mapping_arg = []
         for component in self.pipelines[pipeline_id]["components"]:
-            args.append(mapping[component])
+            mapping_arg.append(mapping[component])
+        mapping_arg_json = json.dumps(mapping_arg)
+        args.append(mapping_arg_json)
 
         if self.enable_caching:
             args.append("-c")
@@ -113,19 +116,20 @@ class PipelineManager:
     
         placements = self.decision_unit.get_placements(pipelines_to_place, pipelines_metadata)
 
-        # for placement in placements:
-        #     pipeline_id = placement["pipeline_id"]
-        #     mapping = placement["mapping"]
-        #     efforts = placement["efforts"]
+        for placement in placements:
+            pipeline_id = placement["pipeline_id"]
+            mapping = placement["mapping"]
+            efforts = placement["efforts"]
 
-        #     for c, node in mapping.items():
-        #         self.pipelines[pipeline_id]["components"][c]["node"] = node
-        #         self.pipelines[pipeline_id]["components"][c]["effort"] = efforts[c]
+            for c, selected_node in mapping.items():
+                node_name, _ = selected_node
+                self.pipelines[pipeline_id]["components"][c]["node"] = node_name
+                self.pipelines[pipeline_id]["components"][c]["effort"] = efforts[c]
             
-        #     self.pipelines[pipeline_id]["total_effort"] = efforts["total"]  # DEBUG
+            self.pipelines[pipeline_id]["effort"] = efforts["total"]  # DEBUG
             
-        #     self.build_pipeline(pipeline_id, mapping)
-        #     self.execution_queue.put(pipeline_id)
+            self.build_pipeline(pipeline_id, mapping)
+            # self.execution_queue.put(pipeline_id)
 
     
     def update_component_details(self, pipeline: Dict, task_details: List):

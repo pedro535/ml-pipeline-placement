@@ -17,12 +17,16 @@ class DecisionUnit:
         # Calculate computational effort for each pipeline and its components
         computational_effort = self.calculate_computational_effort(pipelines, pipelines_metadata)
 
+        # DEBUG
+        node = "ml-worker-med-01"
+        platform = "amd64"
+
         placements = []
         for pipeline_id, components in pipelines:
             placements.append({
                 "pipeline_id": pipeline_id,
-                "mapping": {c: None for c in components},
-                "efforts": computational_effort[pipeline_id]["total"]
+                "mapping": {c: (node, platform) for c in components},
+                "efforts": computational_effort[pipeline_id]
             })
 
         # Scheduling (sort by total effort for now)
