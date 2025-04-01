@@ -64,7 +64,7 @@ class ComponentConverter:
         return self
 
 
-    def add_decorator(self, component_name: str, image: str):
+    def add_decorator(self, component_name: str, image: str, tag: str):
         """
         Add the kfp component decorator to the function
         """
@@ -74,7 +74,7 @@ class ComponentConverter:
                     func=ast.Name(id=KFP_COMPONENT_DECORATOR, ctx=ast.Load()),
                     args=[],
                     keywords=[
-                        ast.keyword(arg="base_image", value=ast.Constant(s=image))
+                        ast.keyword(arg="base_image", value=ast.Constant(s=f"{image}:{tag}"))
                     ],
                 )
                 node.decorator_list.append(decorator_node)

@@ -55,7 +55,7 @@ class Component:
         self.volumes.append((pvc, mount_path))
 
 
-    def convert(self) -> None:
+    def convert(self, platform: str) -> None:
         """
         Compile the component to a kfp component
         """
@@ -64,7 +64,7 @@ class Component:
         (
             converter.remove_type_imports()
             .add_imports(self.arg_types)
-            .add_decorator(self.name, self.image)
+            .add_decorator(self.name, self.image, platform)
             .update_arg_types(self.name)
             .save_component(self.filename)
         )

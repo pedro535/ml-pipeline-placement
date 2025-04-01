@@ -1,7 +1,7 @@
 import ast
 import astor
 import black
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 from mlopx import Component
 from mlopx.consts import (
@@ -145,14 +145,15 @@ class PipelineBuilder:
         return self
 
         
-    def add_node_selector(self, components: List[Component], node_selectors: List[str]):
+    def add_node_selector(self, components: List[Component], mapping: List[Tuple[str, str]]):
         """
         Add node selectors to components
         """
-        if not node_selectors:
+        if not mapping:
             return self
         
         for i, component in enumerate(components):
+            node_name = mapping[i][0]
             invoke_node = ast.Call(
                 func=ast.Name(id="add_node_selector", ctx=ast.Load()),
                 args=[],
@@ -167,7 +168,7 @@ class PipelineBuilder:
                     ),
                     ast.keyword(
                         arg="label_value",
-                        value=ast.Constant(value=node_selectors[i])
+                        value=ast.Constant(value=node_name)
                     )
                 ],
             )

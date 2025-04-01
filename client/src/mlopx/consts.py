@@ -27,6 +27,8 @@ ARGPARSE_CODE = [
     "parser = argparse.ArgumentParser()",
     "parser.add_argument('-u', type=str, help='kfp URL', required=True)",
     "parser.add_argument('-c', help='Enable caching', action='store_true')",
-    "parser.add_argument('-p', nargs='+', help='Placement', required=True)",
+    "parser.add_argument('-m', type=str, help='Mapping', required=True)",
     "args = parser.parse_args()"
 ]
+
+PIPELINE_BUILD_CALL = "pipeline.build(args.u, args.c, args.m)"

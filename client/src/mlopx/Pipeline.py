@@ -8,7 +8,7 @@ import json
 from typing import List, Tuple
 
 from mlopx import Component, PipelineBuilder
-from mlopx.consts import ARGPARSE_CODE
+from mlopx.consts import ARGPARSE_CODE, PIPELINE_BUILD_CALL
 
 
 class Pipeline:
@@ -53,7 +53,7 @@ class Pipeline:
             tree = ast.parse(code)
 
         argparse_nodes = [n for line in ARGPARSE_CODE for n in ast.parse(line).body]
-        run_node = ast.parse("pipeline.build(args.u, args.c, args.p)").body
+        run_node = ast.parse(PIPELINE_BUILD_CALL).body
 
         for i, node in enumerate(tree.body):
             if not isinstance(node, ast.ImportFrom) and not isinstance(node, ast.Import):
@@ -140,12 +140,15 @@ class Pipeline:
         self.handle_response(response)
 
 
-    def build(self, kfp_url: str, enable_caching: str, placement: List[str]):
+    def build(self, kfp_url: str, enable_caching: str, mapping_json: str) -> None:
         """
         Build the kfp pipeline
         """
-        for component in self.components:
-            component.convert()
+        mapping = json.loads(mapping_json)
+
+        for i, component in enumerate(self.components):
+            _, platform = mapping[i]
+            component.convert(platform)
 
         builder = PipelineBuilder()
         (
@@ -154,7 +157,7 @@ class Pipeline:
             .add_decorator(self.name)
             .call_components(self.components, self.artifacts)
             .mount_volumes(self.components)
-            .add_node_selector(self.components, placement)
+            .add_node_selector(self.components, mapping)
             .create_client(kfp_url)
             .add_create_run(self.func_name, enable_caching)
             .save_pipeline()
