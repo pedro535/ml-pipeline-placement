@@ -116,20 +116,20 @@ class PipelineManager:
     
         placements = self.decision_unit.get_placements(pipelines_to_place, pipelines_metadata)
 
-        for placement in placements:
-            pipeline_id = placement["pipeline_id"]
-            mapping = placement["mapping"]
-            efforts = placement["efforts"]
+        # for placement in placements:
+        #     pipeline_id = placement["pipeline_id"]
+        #     mapping = placement["mapping"]
+        #     efforts = placement["efforts"]
 
-            for c, selected_node in mapping.items():
-                node_name, _ = selected_node
-                self.pipelines[pipeline_id]["components"][c]["node"] = node_name
-                self.pipelines[pipeline_id]["components"][c]["effort"] = efforts[c]
+        #     for c, selected_node in mapping.items():
+        #         node_name, _ = selected_node
+        #         self.pipelines[pipeline_id]["components"][c]["node"] = node_name
+        #         self.pipelines[pipeline_id]["components"][c]["effort"] = efforts[c]
             
-            self.pipelines[pipeline_id]["effort"] = efforts["total"]  # DEBUG
+        #     self.pipelines[pipeline_id]["effort"] = efforts["total"]  # DEBUG
             
-            self.build_pipeline(pipeline_id, mapping)
-            # self.execution_queue.put(pipeline_id)
+        #     self.build_pipeline(pipeline_id, mapping)
+        #     self.execution_queue.put(pipeline_id)
 
     
     def update_component_details(self, pipeline: Dict, task_details: List):

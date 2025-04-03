@@ -1,0 +1,40 @@
+{
+    "1e135635-f121-4143-bf28-45bceb553032": {
+        "components": {
+            "data-preprocessing": {
+                "file": "data_preprocessing.py",
+                "node": null,
+                "effort": null,
+                "start_time": null,
+                "end_time": null,
+                "duration": null,
+                "state": null
+            },
+            "model-training": {
+                "file": "model_training.py",
+                "node": null,
+                "effort": null,
+                "start_time": null,
+                "end_time": null,
+                "duration": null,
+                "state": null
+            },
+            "model-evaluation": {
+                "file": "model_evaluation.py",
+                "node": null,
+                "effort": null,
+                "start_time": null,
+                "end_time": null,
+                "duration": null,
+                "state": null
+            }
+        },
+        "total_effort": null,
+        "state": "QUEUED",
+        "kfp_id": null,
+        "scheduled_at": null,
+        "finished_at": null,
+        "duration": null,
+        "last_update": null
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "components_type": {
+        "data-preprocessing": "preprocessing",
+        "model-training": "training",
+        "model-evaluation": "evaluation"
+    },
+    "dataset": {
+        "name": "adult_income",
+        "type": "tabular",
+        "train_percentage": 0.8,
+        "val_percentage": 0,
+        "test_percentage": 0.2,
+        "original": {
+            "n_samples": 48842,
+            "n_features": 14,
+            "n_classes": 2
+        },
+        "preprocessed": {
+            "n_samples": 74218,
+            "n_features": 12,
+            "n_classes": 2
+        }
+    },
+    "model": {
+        "type": "logistic_regression",
+        "params": {
+            "n_iter": 100
+        }
+    }
+}

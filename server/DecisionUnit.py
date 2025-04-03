@@ -11,69 +11,82 @@ class DecisionUnit:
         self.data_manager = data_manager
         self.estimator = MLEstimator()
 
+        self.effort_calculators = {
+            "preprocessing": self.preprocessing_effort,
+            "training": self.training_effort,
+            "evaluation": self.evaluation_effort
+        }
 
-    def get_placements(self, pipelines: List[Tuple], pipelines_metadata: Dict) -> List[Dict]:
+        self.placement_strategies = {
+            "preprocessing": self.preprocessing_node,
+            "training": self.training_node,
+            "evaluation": self.evaluation_node
+        }
+
+
+    def get_placements(self, pipelines: List[Tuple[str, List]], pipelines_metadata: Dict) -> List[Dict]:
         
-        # Calculate computational effort for each pipeline and its components
-        computational_effort = self.calculate_computational_effort(pipelines, pipelines_metadata)
+        # Calculate comp. effort for each pipeline and its components
+        efforts = self.get_efforts(pipelines, pipelines_metadata)
 
-        # DEBUG
-        node = "ml-worker-med-01"
-        platform = "amd64"
-
+        # Scheduling
+        run_order = [(pipeline_id, efforts["total"]) for pipeline_id, efforts in efforts.items()]
+        run_order = sorted(run_order, key=lambda x: x[1], reverse=True)
+                           
+        # Placement
         placements = []
-        for pipeline_id, components in pipelines:
+        for pipeline_id, _ in run_order:
+            metadata = pipelines_metadata[pipeline_id]
+            components_type = metadata["components_type"]
+            pipeline_efforts = efforts[pipeline_id]
+            mapping = {}
+            
+            for component, c_type in components_type.items():
+                if c_type in self.placement_strategies:
+                    node, platform = self.placement_strategies[c_type](metadata, pipeline_efforts[component])
+                    mapping[component] = (node, platform)
+                else:
+                    print(f"Unknown component type: {c_type}")
+            
             placements.append({
                 "pipeline_id": pipeline_id,
-                "mapping": {c: (node, platform) for c in components},
-                "efforts": computational_effort[pipeline_id]
+                "mapping": mapping,
+                "efforts": efforts[pipeline_id]
             })
-
-        # Scheduling (sort by total effort for now)
-        placements = sorted(placements, key=lambda x: x["efforts"]["total"])
-
-        # Placement
-        # TODO
         
         return placements
 
 
-    def calculate_computational_effort(self, pipelines: List[Tuple], pipelines_metadata: Dict) -> Dict:
-        computational_effort = {}
+    def get_efforts(self, pipelines: List[Tuple], pipelines_metadata: Dict) -> Dict:
+        efforts = {}
         
         for pipeline_id, components in pipelines:
             metadata = pipelines_metadata[pipeline_id]
             
-            efforts = {}
+            pipeline_efforts = {}
             total_effort = 0
             for component in components:
-                component_effort = self.get_effort(component, metadata)
-                efforts[component] = component_effort
+                component_effort = self.calculate_effort(component, metadata)
+                pipeline_efforts[component] = component_effort
                 total_effort += component_effort
                 
-            efforts["total"] = total_effort
-            computational_effort[pipeline_id] = efforts
+            pipeline_efforts["total"] = total_effort
+            efforts[pipeline_id] = pipeline_efforts
             
-        return computational_effort
+        return efforts
 
 
-    def get_effort(self, component: str, metadata: Dict) -> int:
+    def calculate_effort(self, component: str, metadata: Dict) -> int:
         component_type = metadata["components_type"][component]
         
-        effort_calculators = {
-            "preprocessing": self.calculate_preprocessing_effort,
-            "training": self.calculate_training_effort,
-            "evaluation": self.calculate_evaluation_effort
-        }
-        
-        if component_type in effort_calculators:
-            return effort_calculators[component_type](metadata)
+        if component_type in self.effort_calculators:
+            return self.effort_calculators[component_type](metadata)
         else:
             print(f"Unknown component type: {component_type}")
             return 0
 
 
-    def calculate_preprocessing_effort(self, metadata: Dict) -> int:
+    def preprocessing_effort(self, metadata: Dict) -> int:
         n_samples = metadata["dataset"]["original"]["n_samples"]
         
         # Calculate the number of features based on dataset type
@@ -90,7 +103,7 @@ class DecisionUnit:
         return effort
 
 
-    def calculate_training_effort(self, metadata: Dict) -> int:
+    def training_effort(self, metadata: Dict) -> int:
         return self.estimate_model_effort(
             metadata, 
             metadata["dataset"]["train_percentage"], 
@@ -98,7 +111,7 @@ class DecisionUnit:
         )
 
 
-    def calculate_evaluation_effort(self, metadata: Dict) -> int:
+    def evaluation_effort(self, metadata: Dict) -> int:
         return self.estimate_model_effort(
             metadata, 
             metadata["dataset"]["test_percentage"], 
@@ -124,3 +137,18 @@ class DecisionUnit:
                 estimator_params[key] = value
                 
         return self.estimator.estimate(model, estimator_params, training=training)
+
+
+    def preprocessing_node(self, metadata: Dict, effort: int) -> Tuple[str, str]:
+        print(f"Get node for preprocessing component with effort {effort}")
+        return None, None
+
+    
+    def training_node(self, metadata: Dict, effort: int) -> Tuple[str, str]:
+        print(f"Get node for training component with effort {effort}")
+        return None, None
+
+
+    def evaluation_node(self, metadata: Dict, effort: int) -> Tuple[str, str]:
+        print(f"Get node for evaluation component with effort {effort}")
+        return None, None
