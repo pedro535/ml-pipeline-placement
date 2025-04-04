@@ -13,12 +13,20 @@
         "original": {
             "n_samples": 48842,
             "n_features": 14,
-            "n_classes": 2
+            "n_classes": 2,
+            "data_types": {
+                "int64": 6,
+                "object": 9
+            }
         },
         "preprocessed": {
             "n_samples": 74218,
             "n_features": 12,
-            "n_classes": 2
+            "n_classes": 2,
+            "data_types": {
+                "int64": 10,
+                "float64": 3
+            }
         }
     },
     "model": {
