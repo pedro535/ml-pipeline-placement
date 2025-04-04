@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 import subprocess
 from datetime import datetime
+from typing import Dict
+import numpy as np
 
 from server.settings import DATASETS_PATH
 
@@ -44,10 +46,10 @@ class DataManager:
 
     def get_folder_size(self, folder):
         """
-        Get the size of a folder in bytes.
+        Get the size of a folder in kilobytes.
         """
         run = subprocess.run(["du", "-sk", folder], capture_output=True, text=True)
-        size = int(run.stdout.split()[0]) * 1024
+        size = int(run.stdout.split()[0])
         return size
 
 
@@ -61,9 +63,47 @@ class DataManager:
 
     def get_dataset_size(self, dataset):
         """
-        Get the size of a dataset.
+        Get the size of a dataset in kilobytes.
         """
         if dataset in self.datasets:
             return self.datasets[dataset]["size"]
         else:
             return None
+        
+
+    def npy_array_size(self, details: Dict) -> int:
+        """
+        Estimate the size of a numpy array in kilobytes.
+        """
+        n_samples = details["n_samples"]
+        data_types = details["data_types"]
+
+        # Sample size
+        sample_size = 0
+        for type_name, count in data_types.items():
+            size = np.dtype(type_name).itemsize
+            sample_size += size * count
+
+        # Total size
+        total_size = sample_size * n_samples
+        return total_size // 1024
+
+    
+    def size_in_memory(self, dataset: Dict) -> int:
+        """
+        Get the size of a dataset in memory in kilobytes.
+        This assumes dataset is represented as a numpy array.
+        """
+        name = dataset["name"]
+        original = dataset["original"]
+        preprocessed = dataset["preprocessed"]
+
+        if dataset["type"] == "image":
+            size = self.get_dataset_size(name)        
+        elif dataset["type"] == "tabular":
+            original_size = self.npy_array_size(original)
+            preprocessed_size = self.npy_array_size(preprocessed)
+            # Assuming the original is overwritten with the preprocessed data
+            size = max(original_size, preprocessed_size)
+
+        return size

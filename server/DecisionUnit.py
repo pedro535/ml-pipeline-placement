@@ -10,6 +10,9 @@ class DecisionUnit:
         self.node_manager = node_manager
         self.data_manager = data_manager
         self.estimator = MLEstimator()
+        self.assignments = {}
+        self.assignments_counts = {}
+        self.init_assignments()
 
         self.effort_calculators = {
             "preprocessing": self.preprocessing_effort,
@@ -24,16 +27,53 @@ class DecisionUnit:
         }
 
 
+    def init_assignments(self):
+        """
+        Initialize assignments and counts for each node.
+        """
+        self.node_manager.update_nodes()
+        for node in self.node_manager.get_nodes():
+            name = node["name"]
+            self.assignments[name] = set()
+            self.assignments_counts[name] = 0
+
+    
+    def add_assignment(self, node: str, pipeline_id: str, component: str):
+        """
+        Add a new assignment to a node.
+        """
+        self.assignments[node].add(f"{pipeline_id}/{component}")
+        self.assignments_counts[node] += 1
+
+    
+    def rm_assignment(self, node: str, pipeline_id: str, component: str):
+        """
+        Remove an assignment from a node.
+        """
+        self.assignments[node].remove(f"{pipeline_id}/{component}")
+        self.assignments_counts[node] -= 1
+
+    
+    def less_overloaded_node(self, nodes: List[Dict]) -> Dict:
+        """
+        From the list of nodes, return the one with less components assigned.
+        """
+        overload = [(node, self.assignments_counts[node["name"]]) for node in nodes]
+        overload = sorted(overload, key=lambda x: x[1])
+        return overload[0][0]
+
+
     def get_placements(self, pipelines: List[Tuple[str, List]], pipelines_metadata: Dict) -> List[Dict]:
         
         # Calculate comp. effort for each pipeline and its components
         efforts = self.get_efforts(pipelines, pipelines_metadata)
 
-        # Scheduling
+        # Scheduling: SJF
         run_order = [(pipeline_id, efforts["total"]) for pipeline_id, efforts in efforts.items()]
-        run_order = sorted(run_order, key=lambda x: x[1], reverse=True)
-                           
+        run_order = sorted(run_order, key=lambda x: x[1])
+
         # Placement
+        self.node_manager.update_nodes()
         placements = []
         for pipeline_id, _ in run_order:
             metadata = pipelines_metadata[pipeline_id]
@@ -45,6 +85,7 @@ class DecisionUnit:
                 if c_type in self.placement_strategies:
                     node, platform = self.placement_strategies[c_type](metadata, pipeline_efforts[component])
                     mapping[component] = (node, platform)
+                    self.add_assignment(node, pipeline_id, component)
                 else:
                     print(f"Unknown component type: {c_type}")
             
@@ -140,8 +181,22 @@ class DecisionUnit:
 
 
     def preprocessing_node(self, metadata: Dict, effort: int) -> Tuple[str, str]:
-        print(f"Get node for preprocessing component with effort {effort}")
-        return None, None
+        dataset = metadata["dataset"]
+        size = self.data_manager.size_in_memory(dataset)
+        nodes = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])  # TODO: put types as constants
+
+        candidates = []
+        for node in nodes:
+            memory = node["memory"]
+            memory_usage = node["memory_usage"]
+            memory_free = memory - (memory * memory_usage)
+            memory_required = size * 1.5
+            
+            if memory_free > memory_required:
+                candidates.append(node)
+            
+        node = self.less_overloaded_node(candidates)
+        return node["name"], node["architecture"]
 
     
     def training_node(self, metadata: Dict, effort: int) -> Tuple[str, str]:
@@ -152,3 +207,4 @@ class DecisionUnit:
     def evaluation_node(self, metadata: Dict, effort: int) -> Tuple[str, str]:
         print(f"Get node for evaluation component with effort {effort}")
         return None, None
+        
