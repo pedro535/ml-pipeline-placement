@@ -6,22 +6,23 @@ import subprocess
 from kfp import Client
 import json
 
-from server import DecisionUnit
+from server import DecisionUnit, NodeManager
 from server.settings import KFP_URL, ENABLE_CACHING, METADATA_FILENAME, pipelines_dir
 
 
 class PipelineManager:
 
-    def __init__(self, decision_unit: DecisionUnit):
+    def __init__(self, decision_unit: DecisionUnit, node_manager: NodeManager):
+        self.decision_unit = decision_unit
+        self.node_manager = node_manager
         self.kfp_url = KFP_URL
         self.enable_caching = ENABLE_CACHING
         self.dir = pipelines_dir
         self.kfp_client = Client(host=self.kfp_url)
-        self.decision_unit = decision_unit
         self.pipelines = {}
         self.submission_queue = Queue()
-        self.execution_queue = Queue()
-        self.running_pipeline = None
+        self.waiting_list = []
+        self.running_pipelines = []
 
 
     def add_pipeline(self, pipeline_id: str, components: List[Tuple[str, str]]):
@@ -116,27 +117,40 @@ class PipelineManager:
     
         placements = self.decision_unit.get_placements(pipelines_to_place, pipelines_metadata)
 
-        # for placement in placements:
-        #     pipeline_id = placement["pipeline_id"]
-        #     mapping = placement["mapping"]
-        #     efforts = placement["efforts"]
+        for placement in placements:
+            pipeline_id = placement["pipeline_id"]
+            mapping = placement["mapping"]
+            efforts = placement["efforts"]
 
-        #     for c, selected_node in mapping.items():
-        #         node_name, _ = selected_node
-        #         self.pipelines[pipeline_id]["components"][c]["node"] = node_name
-        #         self.pipelines[pipeline_id]["components"][c]["effort"] = efforts[c]
-            
-        #     self.pipelines[pipeline_id]["effort"] = efforts["total"]  # DEBUG
-            
-        #     self.build_pipeline(pipeline_id, mapping)
-        #     self.execution_queue.put(pipeline_id)
+            for c, selected_node in mapping.items():
+                node_name, _ = selected_node
+                self.pipelines[pipeline_id]["components"][c]["node"] = node_name
+                self.pipelines[pipeline_id]["components"][c]["effort"] = efforts[c]
+            self.pipelines[pipeline_id]["effort"] = efforts["total"]
 
-    
-    def update_component_details(self, pipeline: Dict, task_details: List):
+            self.build_pipeline(pipeline_id, mapping)
+            self.waiting_list.append(pipeline_id)
+        
+        print(json.dumps(self.decision_unit.assignments, indent=4, default=str))
+
+
+    def terminate_pipelines(self):
+        """
+        Remove completed pipelines from running pipelines list.
+        """
+        for pipeline_id in self.running_pipelines.copy():
+            state = self.pipelines[pipeline_id]["state"]
+            if state in ["SUCCEEDED", "FAILED"]:
+                self.running_pipelines.remove(pipeline_id)
+
+
+    def update_components(self, pipeline_id: str, task_details: List):
         """
         Update details of components
         """
+        pipeline = self.pipelines[pipeline_id]
         epoch_date = datetime.fromtimestamp(0, tz=tz.tzutc())
+
         for task in task_details:
             task_name = task["display_name"]
             if task_name in pipeline["components"]:
@@ -147,11 +161,18 @@ class PipelineManager:
                 component["duration"] = round(duration, 2) if duration >= 0 else None
                 component["state"] = task["state"]
 
+                if component["state"] == "SUCCEEDED":
+                    node = component["node"]
+                    self.decision_unit.rm_assignment(node, pipeline_id, task_name)
+                    if not self.decision_unit.is_node_needed(component["node"], pipeline_id):
+                        self.node_manager.release_nodes([component["node"]])
 
-    def update_pipeline_details(self, pipeline: Dict, run_details: Dict):
+
+    def update_pipeline(self, pipeline_id: str, run_details: Dict):
         """
         Update details of pipelines
         """
+        pipeline = self.pipelines[pipeline_id]
         epoch_date = datetime.fromtimestamp(0, tz=tz.tzutc())
         pipeline["state"] = run_details["state"]
         pipeline["scheduled_at"] = run_details["scheduled_at"]
@@ -161,32 +182,39 @@ class PipelineManager:
         pipeline["last_update"] = datetime.now(tz=tz.tzutc())
 
 
-    def update_running_pipeline(self):
-        """
-        Update the state of the running pipeline or start the next one
-        """
-        if self.running_pipeline is not None:
-            pipeline = self.pipelines[self.running_pipeline]
+    def update_pipelines(self):
+
+        # FOR DEBUG
+        print("Waiting list: ", self.waiting_list)
+        print("Running pipelines: ", self.running_pipelines)
+
+        # Update running pipelines
+        for pipeline_id in self.running_pipelines:
+            pipeline = self.pipelines[pipeline_id]
             run_details = self.kfp_client.get_run(pipeline["kfp_id"]).to_dict()
 
-            self.update_component_details(pipeline, run_details["run_details"]["task_details"])
-            self.update_pipeline_details(pipeline, run_details)
-            
-            if pipeline["state"] in ["SUCCEEDED", "FAILED"]:
-                self.running_pipeline = None
+            self.update_components(pipeline_id, run_details["run_details"]["task_details"])
+            self.update_pipeline(pipeline_id, run_details)
+        
+        # Terminate completed pipelines
+        self.terminate_pipelines()
 
-        if self.running_pipeline is None and not self.execution_queue.empty():
-            pipeline_id = self.execution_queue.get()
-            self.run_pipeline(pipeline_id)
-            self.running_pipeline = pipeline_id
+        # Check for new pipeline to be executed
+        for pipeline_id in self.waiting_list.copy():
+            pipeline = self.pipelines[pipeline_id]
+            nodes = [c["node"] for c in pipeline["components"].values()]
 
-        # DEBUG
-        print("---" * 20)
-        print(f"Pipelines waiting for run: {self.execution_queue.qsize()}")
+            if self.node_manager.nodes_available(nodes):
+                self.node_manager.reserve_nodes(nodes)
+                self.run_pipeline(pipeline_id)
+                self.running_pipelines.append(pipeline_id)
+                self.waiting_list.remove(pipeline_id)
 
-        if self.running_pipeline is not None:
-            print(f"Pipeline running: {self.running_pipeline}")
-            print(json.dumps(self.pipelines[self.running_pipeline], indent=4, default=str))
+        print(json.dumps(self.decision_unit.assignments, indent=4, default=str))
+        print(json.dumps(self.node_manager.availability, indent=4, default=str))
+        pipelines_running = [p for p_id, p in self.pipelines.items() if p_id in self.running_pipelines]
+        print(json.dumps(pipelines_running, indent=4, default=str))
+        print("-" * 50)
 
 
     def get_metadata(self, pipeline_id: str) -> Dict:
@@ -203,7 +231,6 @@ class PipelineManager:
         """
         Dump the pipeline details to a file
         """
-        # sort pipelines by total effort
         pipelines = dict(
             sorted(self.pipelines.items(), key=lambda item: item[1]["total_effort"])
         )

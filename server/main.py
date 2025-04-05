@@ -17,7 +17,7 @@ from server.settings import (
 node_manager = NodeManager()
 data_manager = DataManager()
 decision_unit = DecisionUnit(node_manager, data_manager)
-pipeline_manager = PipelineManager(decision_unit)
+pipeline_manager = PipelineManager(decision_unit, node_manager)
 scheduler = BackgroundScheduler()
 
 @asynccontextmanager
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
         seconds=WAIT_INTERVAL,
     )
     scheduler.add_job(
-        func=pipeline_manager.update_running_pipeline,
+        func=pipeline_manager.update_pipelines,
         trigger="interval",
         seconds=UPDATE_INTERVAL,
     )

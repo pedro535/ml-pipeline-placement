@@ -15,7 +15,9 @@ class NodeManager:
 
         self.v1 = client.CoreV1Api()
         self.nodes = {}
+        self.availability = {} # True-free, False-occupied
         self.update_nodes()
+        self.init_availability()
 
     
     def update_nodes(self):
@@ -41,6 +43,11 @@ class NodeManager:
                 "cpu_usage": self.get_cpu_usage(node_ip),
                 "memory_usage": self.get_memory_usage(node_ip)
             }
+        
+    
+    def init_availability(self):
+        nodes = [n["name"] for n in self.get_nodes()]
+        self.availability = {node: True for node in nodes}
     
     
     def get_cpu_usage(self, node_ip) -> float:
@@ -92,3 +99,24 @@ class NodeManager:
             )
 
         return nodes
+
+
+    def nodes_available(self, nodes: List[str]):
+        occupation = [val for node, val in self.availability.items() if node in nodes]
+        return all(occupation)
+    
+
+    def reserve_nodes(self, nodes: List[str]):
+        """
+        Reserve nodes for a pipeline
+        """
+        for node in nodes:
+            self.availability[node] = False
+
+    
+    def release_nodes(self, nodes: List[str]):
+        """
+        Release nodes after a pipeline is finished
+        """
+        for node in nodes:
+            self.availability[node] = True

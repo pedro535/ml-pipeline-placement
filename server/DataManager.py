@@ -89,21 +89,19 @@ class DataManager:
         return total_size // 1024
 
     
-    def size_in_memory(self, dataset: Dict) -> int:
+    def size_in_memory(self, dataset_metadata: Dict, version: str) -> int:
         """
         Get the size of a dataset in memory in kilobytes.
         This assumes dataset is represented as a numpy array.
+        :param dataset: Dataset metadata
+        :param version: Version of the dataset (original or preprocessed)
         """
-        name = dataset["name"]
-        original = dataset["original"]
-        preprocessed = dataset["preprocessed"]
+        name = dataset_metadata["name"]
+        version = dataset_metadata[version]
 
-        if dataset["type"] == "image":
+        if dataset_metadata["type"] == "image":
             size = self.get_dataset_size(name)        
-        elif dataset["type"] == "tabular":
-            original_size = self.npy_array_size(original)
-            preprocessed_size = self.npy_array_size(preprocessed)
-            # Assuming the original is overwritten with the preprocessed data
-            size = max(original_size, preprocessed_size)
+        elif dataset_metadata["type"] == "tabular":
+            size = self.npy_array_size(version)
 
         return size

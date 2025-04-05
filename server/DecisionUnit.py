@@ -50,15 +50,47 @@ class DecisionUnit:
         """
         Remove an assignment from a node.
         """
-        self.assignments[node].remove(f"{pipeline_id}/{component}")
-        self.assignments_counts[node] -= 1
+        component_id = f"{pipeline_id}/{component}"
+        if component_id in self.assignments[node]:
+            self.assignments[node].remove(component_id)
+            self.assignments_counts[node] -= 1
 
     
-    def less_overloaded_node(self, nodes: List[Dict]) -> Dict:
+    def nodes_free(self, nodes: List[str]) -> bool:
         """
-        From the list of nodes, return the one with less components assigned.
+        Checks is the provided nodes are free or not.
         """
-        overload = [(node, self.assignments_counts[node["name"]]) for node in nodes]
+        print(self.assignments_counts)
+        counts = []
+        for node, counter in self.assignments_counts.items():
+            if node in nodes:
+                counts.append(counter)
+        
+        return sum(counts) == 0
+
+
+    def is_node_needed(self, node: str, pipeline_id: str) -> bool:
+        """
+        Check if a node is still needed for a pipeline.
+        """
+        for pipeline in self.assignments[node]:
+            if pipeline.split("/")[0] == pipeline_id:
+                return True
+        return False
+
+    
+    def choose_node(self, candidates: List[Dict], pipeline_id: str) -> Dict:
+        # Check if the pipeline already has an assignment(s)
+        nodes = []
+        for node, components in self.assignments.items():
+            pipelines = [c.split("/")[0] for c in components]
+            if pipeline_id in pipelines:
+                nodes.append(node)
+
+        common_nodes = [c for c in candidates if c["name"] in nodes]
+        candidates = common_nodes if common_nodes else candidates
+
+        overload = [(node, self.assignments_counts[node["name"]]) for node in candidates]
         overload = sorted(overload, key=lambda x: x[1])
         return overload[0][0]
 
@@ -78,12 +110,12 @@ class DecisionUnit:
         for pipeline_id, _ in run_order:
             metadata = pipelines_metadata[pipeline_id]
             components_type = metadata["components_type"]
-            pipeline_efforts = efforts[pipeline_id]
             mapping = {}
             
             for component, c_type in components_type.items():
                 if c_type in self.placement_strategies:
-                    node, platform = self.placement_strategies[c_type](metadata, pipeline_efforts[component])
+                    strategy_fn = self.placement_strategies[c_type]
+                    node, platform = strategy_fn(pipeline_id, metadata)
                     mapping[component] = (node, platform)
                     self.add_assignment(node, pipeline_id, component)
                 else:
@@ -180,10 +212,14 @@ class DecisionUnit:
         return self.estimator.estimate(model, estimator_params, training=training)
 
 
-    def preprocessing_node(self, metadata: Dict, effort: int) -> Tuple[str, str]:
+    def preprocessing_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
         dataset = metadata["dataset"]
-        size = self.data_manager.size_in_memory(dataset)
-        nodes = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])  # TODO: put types as constants
+        size = max(
+            self.data_manager.size_in_memory(dataset, "original"),
+            self.data_manager.size_in_memory(dataset, "preprocessed")
+        )
+        
+        nodes = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])
 
         candidates = []
         for node in nodes:
@@ -195,16 +231,51 @@ class DecisionUnit:
             if memory_free > memory_required:
                 candidates.append(node)
             
-        node = self.less_overloaded_node(candidates)
+        node = self.choose_node(candidates, pipeline_id)
         return node["name"], node["architecture"]
 
     
-    def training_node(self, metadata: Dict, effort: int) -> Tuple[str, str]:
-        print(f"Get node for training component with effort {effort}")
-        return None, None
+    def training_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+        # Dataset
+        dataset = metadata["dataset"]
+        size = self.data_manager.size_in_memory(dataset, "preprocessed")
+
+        # Model
+        model = metadata["model"]["type"]
+        if model in ["logistic_regression", "linear_regression", "decision_tree"]:
+            node_types = ["low", "med"]
+        elif model in ["random_forest", "svm"]:
+            node_types = ["med"]
+        elif model in ["nn", "cnn"]:
+            node_types = ["high-cpu"]
+        else:
+            print(f"Unknown model type: {model}")
+            node_types = ["med"]
+
+        # Get nodes
+        candidates = self.node_manager.get_nodes(node_types=node_types, sort_params=["cpu_cores", "memory"])
+        node = self.choose_node(candidates, pipeline_id)
+        return node["name"], node["architecture"]
 
 
-    def evaluation_node(self, metadata: Dict, effort: int) -> Tuple[str, str]:
-        print(f"Get node for evaluation component with effort {effort}")
-        return None, None
-        
+    def evaluation_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+        # Dataset
+        dataset = metadata["dataset"]
+        size = self.data_manager.size_in_memory(dataset, "preprocessed")
+
+        # Model
+        model = metadata["model"]["type"]
+        if model in ["logistic_regression", "linear_regression", "decision_tree"]:
+            node_types = ["low", "med"]
+        elif model in ["random_forest", "svm"]:
+            node_types = ["low", "med"]
+        elif model in ["nn", "cnn"]:
+            node_types = ["med", "high-cpu"]
+        else:
+            print(f"Unknown model type: {model}")
+            node_types = ["med"]
+
+        # Get nodes
+        candidates = self.node_manager.get_nodes(node_types=node_types, sort_params=["cpu_cores", "memory"])
+        node = self.choose_node(candidates, pipeline_id)
+        return node["name"], node["architecture"]
