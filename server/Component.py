@@ -1,0 +1,16 @@
+class Component:
+    
+    def __init__(self, name, filename):
+        self.name = name
+        self.filename = filename
+        self.state = None
+        self.node = None
+        self.platform = None
+        self.effort = None
+        self.start_time = None
+        self.end_time = None
+        self.duration = None
+
+
+    def dict_repr(self):
+        return self.__dict__

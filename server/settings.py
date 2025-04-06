@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import datetime
+from dateutil import tz
 
 load_dotenv()
 
@@ -14,8 +16,10 @@ WAIT_INTERVAL = int(os.getenv("WAIT_INTERVAL", "10"))
 UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", "5"))
 NODE_EXPORTER_PORT = int(os.getenv("NODE_EXPORTER_PORT", "9100"))
 PIPELINE_FILENAME = "pipeline.py"
+KFP_PREFIX = "kfp_"
 METADATA_FILENAME = "metadata.json"
 DATASETS_PATH = os.getenv("DATASETS_PATH")
+EPOCH_DATE = datetime.fromtimestamp(0, tz=tz.tzutc())
 
 pipelines_dir = Path(PIPELINES_DIR).resolve()
 pipelines_dir.mkdir(parents=True, exist_ok=True)

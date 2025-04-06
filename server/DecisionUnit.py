@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple
 import json
 
-from server import NodeManager, DataManager, MLEstimator
+from server import NodeManager, DataManager, MLEstimator, Pipeline, Component
 
 
 class DecisionUnit:
@@ -28,9 +28,6 @@ class DecisionUnit:
 
 
     def init_assignments(self):
-        """
-        Initialize assignments and counts for each node.
-        """
         self.node_manager.update_nodes()
         for node in self.node_manager.get_nodes():
             name = node["name"]
@@ -39,40 +36,18 @@ class DecisionUnit:
 
     
     def add_assignment(self, node: str, pipeline_id: str, component: str):
-        """
-        Add a new assignment to a node.
-        """
         self.assignments[node].add(f"{pipeline_id}/{component}")
         self.assignments_counts[node] += 1
 
     
     def rm_assignment(self, node: str, pipeline_id: str, component: str):
-        """
-        Remove an assignment from a node.
-        """
         component_id = f"{pipeline_id}/{component}"
         if component_id in self.assignments[node]:
             self.assignments[node].remove(component_id)
             self.assignments_counts[node] -= 1
 
-    
-    def nodes_free(self, nodes: List[str]) -> bool:
-        """
-        Checks is the provided nodes are free or not.
-        """
-        print(self.assignments_counts)
-        counts = []
-        for node, counter in self.assignments_counts.items():
-            if node in nodes:
-                counts.append(counter)
-        
-        return sum(counts) == 0
-
 
     def is_node_needed(self, node: str, pipeline_id: str) -> bool:
-        """
-        Check if a node is still needed for a pipeline.
-        """
         for pipeline in self.assignments[node]:
             if pipeline.split("/")[0] == pipeline_id:
                 return True
@@ -95,10 +70,10 @@ class DecisionUnit:
         return overload[0][0]
 
 
-    def get_placements(self, pipelines: List[Tuple[str, List]], pipelines_metadata: Dict) -> List[Dict]:
+    def get_placements(self, pipelines: List[Pipeline]) -> List[Dict]:
         
-        # Calculate comp. effort for each pipeline and its components
-        efforts = self.get_efforts(pipelines, pipelines_metadata)
+        # Calculate effort for each pipeline and its components
+        efforts = self.get_efforts(pipelines)
 
         # Scheduling: SJF
         run_order = [(pipeline_id, efforts["total"]) for pipeline_id, efforts in efforts.items()]
@@ -106,9 +81,12 @@ class DecisionUnit:
 
         # Placement
         self.node_manager.update_nodes()
+        pipelines_dict = {pipeline.id: pipeline for pipeline in pipelines}
         placements = []
+        
         for pipeline_id, _ in run_order:
-            metadata = pipelines_metadata[pipeline_id]
+            pipeline = pipelines_dict[pipeline_id]
+            metadata = pipeline.get_metadata()
             components_type = metadata["components_type"]
             mapping = {}
             
@@ -130,32 +108,32 @@ class DecisionUnit:
         return placements
 
 
-    def get_efforts(self, pipelines: List[Tuple], pipelines_metadata: Dict) -> Dict:
+    def get_efforts(self, pipelines: List[Pipeline]) -> Dict:
         efforts = {}
         
-        for pipeline_id, components in pipelines:
-            metadata = pipelines_metadata[pipeline_id]
-            
+        for pipeline in pipelines:
+            metadata = pipeline.get_metadata()
             pipeline_efforts = {}
             total_effort = 0
-            for component in components:
-                component_effort = self.calculate_effort(component, metadata)
-                pipeline_efforts[component] = component_effort
-                total_effort += component_effort
+
+            for component in pipeline.get_components():
+                effort = self.component_effort(component, metadata)
+                pipeline_efforts[component.name] = effort
+                total_effort += effort
                 
             pipeline_efforts["total"] = total_effort
-            efforts[pipeline_id] = pipeline_efforts
+            efforts[pipeline.id] = pipeline_efforts
             
         return efforts
 
 
-    def calculate_effort(self, component: str, metadata: Dict) -> int:
-        component_type = metadata["components_type"][component]
-        
-        if component_type in self.effort_calculators:
-            return self.effort_calculators[component_type](metadata)
+    def component_effort(self, component: Component, metadata: Dict) -> int:
+        c_type = metadata["components_type"][component.name]
+
+        if c_type in self.effort_calculators:
+            return self.effort_calculators[c_type](metadata)
         else:
-            print(f"Unknown component type: {component_type}")
+            print(f"Unknown component type: {c_type}")
             return 0
 
 
