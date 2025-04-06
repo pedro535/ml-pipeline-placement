@@ -112,7 +112,8 @@ class Pipeline:
         Send the pipeline files to the server
         """
         try:
-            response = requests.post(f"{server_url}/submit/", files=files)
+            data = {"name": self.name}
+            response = requests.post(f"{server_url}/submit/", files=files, data=data)
             response.raise_for_status()
             return response
         except requests.RequestException as e:
