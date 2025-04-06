@@ -17,7 +17,7 @@ def model_training(
     y_train = np.load(y_train_ds.path)
 
     # Train model
-    model = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42)
+    model = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42, n_jobs=-1)
     model.fit(x_train, y_train)
 
     # Save model

@@ -23,7 +23,8 @@ def model_training(
         min_samples_leaf=3,
         criterion="entropy",
         max_features="sqrt",
-        random_state=42
+        random_state=42,
+        n_jobs=-1
     )
     model.fit(x_train, y_train)
 

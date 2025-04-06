@@ -20,7 +20,8 @@ def model_training(
         C=0.1,
         solver="liblinear",
         max_iter=100,
-        random_state=42
+        random_state=42,
+        n_jobs=-1
     )
     model.fit(x_train, y_train)
 
