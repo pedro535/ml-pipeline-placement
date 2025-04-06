@@ -9,26 +9,33 @@ from server.settings import METADATA_FILENAME, EPOCH_DATE, pipelines_dir
 
 class Pipeline:
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, name: str):
         self.id = id
+        self.name = name
         self.kfp_id = None
         self.state = None
         self.effort = None
+        self.components: Dict[str, Component] = {}
+        self.metadata = {}
+        self.submitted_at = datetime.now(tz=tz.tzutc())
         self.scheduled_at = None
         self.finished_at = None
-        self.duration = None
         self.last_update = None
-        self.metadata = {}
-        self.components: Dict[str, Component] = {}
+        self.duration = None
         self.load_metadata()
 
 
     def __str__(self):
+        obj_dict = self.dict_repr()
+        return json.dumps(obj_dict, indent=4, default=str)
+    
+
+    def dict_repr(self):
         obj_dict = self.__dict__.copy()
         obj_dict.pop("metadata", None)
         obj_dict.pop("components", None)
         obj_dict["components"] = {name: component.dict_repr() for name, component in self.components.items()}
-        return json.dumps(obj_dict, indent=4, default=str)
+        return obj_dict
 
     
     def load_metadata(self):

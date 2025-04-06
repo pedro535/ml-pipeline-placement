@@ -196,9 +196,12 @@ class DecisionUnit:
             self.data_manager.size_in_memory(dataset, "original"),
             self.data_manager.size_in_memory(dataset, "preprocessed")
         )
-        
-        # nodes = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])
-        nodes = self.node_manager.get_nodes(node_types=["med"], sort_params=["memory"])
+
+        if dataset["type"] == "tabular":
+            node_types = ["low", "med"]
+        elif dataset["type"] == "image":
+            node_types = ["med", "high-cpu"]
+        nodes = self.node_manager.get_nodes(node_types=node_types, sort_params=["memory"])
 
         candidates = []
         for node in nodes:

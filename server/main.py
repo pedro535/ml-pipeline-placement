@@ -1,6 +1,6 @@
 import uuid
 from typing import List
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, Form, File
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
     scheduler.start()
     yield
     scheduler.shutdown()
+    pipeline_manager.dump_pipelines()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -58,10 +59,11 @@ def update_datasets():
 
 
 @app.post("/submit/")
-async def upload_file(
-    components: List[UploadFile],
-    pipeline: UploadFile,
-    metadata: UploadFile
+async def submit_pipeline(
+    name: str = Form(...),
+    components: List[UploadFile] = File(...),
+    pipeline: UploadFile = File(...),
+    metadata: UploadFile = File(...)
 ):
     pipeline_id = str(uuid.uuid4())
     path = pipelines_dir / pipeline_id
@@ -71,8 +73,8 @@ async def upload_file(
     components_info = []
     for file in components:
         filename = file.filename
-        name = filename.split(".")[0].lower().replace("_", "-")
-        components_info.append((filename, name))
+        component_name = filename.split(".")[0].lower().replace("_", "-")
+        components_info.append((filename, component_name))
 
         content = await file.read()
         with open(path / filename, "wb") as f:
@@ -89,10 +91,7 @@ async def upload_file(
         f.write(content)
 
     # Register pipeline
-    pipeline_manager.add_pipeline(
-        pipeline_id=pipeline_id,
-        components=components_info
-    )
+    pipeline_manager.add_pipeline(pipeline_id, name, components_info)
 
     response = {
         "status": "success",

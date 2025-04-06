@@ -27,9 +27,9 @@ class PipelineManager:
         self.running_pipelines = []
 
 
-    def add_pipeline(self, pipeline_id: str, components: List[Tuple[str, str]]):
+    def add_pipeline(self, pipeline_id: str, name: str, components: List[Tuple[str, str]]):
         self.submission_queue.put(pipeline_id)
-        pipeline = Pipeline(pipeline_id)
+        pipeline = Pipeline(pipeline_id, name)
         
         for filename, name in components:
             component = Component(name, filename)
@@ -166,3 +166,12 @@ class PipelineManager:
         for pipeline_id in self.running_pipelines:
             pipeline = self.pipelines[pipeline_id]
             print(pipeline)
+
+    
+    def dump_pipelines(self):
+        pipelines_as_dict = []
+        for pipeline in self.pipelines.values():
+            pipelines_as_dict.append(pipeline.dict_repr())
+
+        with open(pipelines_dir / "pipelines.json", "w") as f:
+            json.dump(pipelines_as_dict, f, indent=4, default=str)
