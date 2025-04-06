@@ -3,5 +3,7 @@ from .Pipeline import Pipeline
 from .NodeManager import NodeManager
 from .DataManager import DataManager
 from .MLEstimator import MLEstimator
+from .PlacerInterface import PlacerInterface
+from .CustomPlacer import CustomPlacer
 from .DecisionUnit import DecisionUnit
 from .PipelineManager import PipelineManager

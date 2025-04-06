@@ -20,6 +20,7 @@ KFP_PREFIX = "kfp_"
 METADATA_FILENAME = "metadata.json"
 DATASETS_PATH = os.getenv("DATASETS_PATH")
 EPOCH_DATE = datetime.fromtimestamp(0, tz=tz.tzutc())
+PLACER = os.getenv("PLACER", "custom")
 
 pipelines_dir = Path(PIPELINES_DIR).resolve()
 pipelines_dir.mkdir(parents=True, exist_ok=True)
