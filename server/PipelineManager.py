@@ -66,7 +66,7 @@ class PipelineManager:
                 name, platform = node
                 pipeline.update_component(c, node=name, platform=platform, effort=efforts[c])
 
-            self.build_pipeline(pipeline_id, mapping)
+            self._build_pipeline(pipeline_id, mapping)
             self.waiting_list.append(pipeline_id)
 
 
@@ -76,11 +76,11 @@ class PipelineManager:
             pipeline = self.pipelines[pipeline_id]
             run_details = self.kfp_client.get_run(pipeline.kfp_id).to_dict()
 
-            self.update_components(pipeline_id, run_details)
+            self._update_components(pipeline_id, run_details)
             pipeline.update_kfp(run_details)
         
         # Terminate completed pipelines
-        self.terminate_pipelines()
+        self._terminate_pipelines()
 
         # Check for new pipeline to be executed
         for pipeline_id in self.waiting_list.copy():
@@ -89,7 +89,7 @@ class PipelineManager:
 
             if self.node_manager.nodes_available(nodes):
                 self.node_manager.reserve_nodes(nodes)
-                self.run_pipeline(pipeline_id)
+                self._run_pipeline(pipeline_id)
                 self.running_pipelines.append(pipeline_id)
                 self.waiting_list.remove(pipeline_id)
 
@@ -99,7 +99,7 @@ class PipelineManager:
         self.print_running_pipelines()
 
 
-    def update_components(self, pipeline_id: str, run_details: Dict):
+    def _update_components(self, pipeline_id: str, run_details: Dict):
         task_details = run_details["run_details"]["task_details"]
         pipeline = self.pipelines[pipeline_id]
         pipeline.update_components_kfp(task_details)
@@ -111,14 +111,19 @@ class PipelineManager:
                     self.node_manager.release_nodes([c.node])
 
 
-    def terminate_pipelines(self):
+    def _terminate_pipelines(self):
         for pipeline_id in self.running_pipelines.copy():
-            state = self.pipelines[pipeline_id].state
-            if state in ["SUCCEEDED", "FAILED"]:
-                self.running_pipelines.remove(pipeline_id)        
+            pipeline = self.pipelines[pipeline_id]
+            if pipeline.state not in ["SUCCEEDED", "FAILED"]:
+                continue
+            
+            self.running_pipelines.remove(pipeline_id)
+            for c in pipeline.get_components():
+                self.decision_unit.rm_assignment(c.node, pipeline_id, c.name)
+                self.node_manager.release_nodes([c.node])
 
 
-    def build_pipeline(self, pipeline_id: str, mapping: Dict[str, Tuple[str, str]]):
+    def _build_pipeline(self, pipeline_id: str, mapping: Dict[str, Tuple[str, str]]):
         pipeline = self.pipelines[pipeline_id]
         path = pipelines_dir / pipeline_id / PIPELINE_FILENAME
         args = ["python3", path, "-u", self.kfp_url, "-m"]
@@ -139,7 +144,7 @@ class PipelineManager:
             pipeline.update(state="FAILED")
 
 
-    def run_pipeline(self, pipeline_id: str):
+    def _run_pipeline(self, pipeline_id: str):
         pipeline = self.pipelines[pipeline_id]
 
         try:

@@ -53,22 +53,6 @@ class DecisionUnit:
                 return True
         return False
 
-    
-    def choose_node(self, candidates: List[Dict], pipeline_id: str) -> Dict:
-        # Check if the pipeline already has an assignment(s)
-        nodes = []
-        for node, components in self.assignments.items():
-            pipelines = [c.split("/")[0] for c in components]
-            if pipeline_id in pipelines:
-                nodes.append(node)
-
-        common_nodes = [c for c in candidates if c["name"] in nodes]
-        candidates = common_nodes if common_nodes else candidates
-
-        overload = [(node, self.assignments_counts[node["name"]]) for node in candidates]
-        overload = sorted(overload, key=lambda x: x[1])
-        return overload[0][0]
-
 
     def get_placements(self, pipelines: List[Pipeline]) -> List[Dict]:
         
@@ -190,6 +174,22 @@ class DecisionUnit:
         return self.estimator.estimate(model, estimator_params, training=training)
 
 
+    def choose_node(self, candidates: List[Dict], pipeline_id: str) -> Dict:
+        # Check if the pipeline already has an assignment(s)
+        nodes = []
+        for node, components in self.assignments.items():
+            pipelines = [c.split("/")[0] for c in components]
+            if pipeline_id in pipelines:
+                nodes.append(node)
+
+        common_nodes = [c for c in candidates if c["name"] in nodes]
+        candidates = common_nodes if common_nodes else candidates
+
+        overload = [(node, self.assignments_counts[node["name"]]) for node in candidates]
+        overload = sorted(overload, key=lambda x: x[1])
+        return overload[0][0]
+    
+    
     def preprocessing_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
         dataset = metadata["dataset"]
         size = max(
@@ -197,7 +197,8 @@ class DecisionUnit:
             self.data_manager.size_in_memory(dataset, "preprocessed")
         )
         
-        nodes = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])
+        # nodes = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])
+        nodes = self.node_manager.get_nodes(node_types=["med"], sort_params=["memory"])
 
         candidates = []
         for node in nodes:
