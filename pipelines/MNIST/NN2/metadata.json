@@ -10,6 +10,7 @@
         "train_percentage": 0.8,
         "val_percentage": 0,
         "test_percentage": 0.2,
+        "normalized": false,
         "original": {
             "n_samples": 70000,
             "input_shape": [28, 28, 1],
