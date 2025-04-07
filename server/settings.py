@@ -21,6 +21,7 @@ METADATA_FILENAME = "metadata.json"
 DATASETS_PATH = os.getenv("DATASETS_PATH")
 EPOCH_DATE = datetime.fromtimestamp(0, tz=tz.tzutc())
 PLACER = os.getenv("PLACER", "custom")
+SEED = os.getenv("SEED", "42")
 
 pipelines_dir = Path(PIPELINES_DIR).resolve()
 pipelines_dir.mkdir(parents=True, exist_ok=True)

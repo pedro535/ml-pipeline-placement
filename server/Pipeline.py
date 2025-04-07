@@ -62,6 +62,8 @@ class Pipeline:
 
         
     def add_component(self, component: Component):
+        # set component type from metadata
+        component.type = self.metadata["components_type"][component.name]
         self.components[component.name] = component
 
 

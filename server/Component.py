@@ -3,6 +3,7 @@ class Component:
     def __init__(self, name, filename):
         self.name = name
         self.filename = filename
+        self.type = None
         self.state = None
         self.node = None
         self.platform = None

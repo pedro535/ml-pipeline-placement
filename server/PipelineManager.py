@@ -56,15 +56,15 @@ class PipelineManager:
         placements = self.decision_unit.get_placements(pipelines_recv)
 
         for placement in placements:
-            pipeline_id = placement["pipeline_id"]
+            pipeline_id = placement.get("pipeline_id")
             pipeline = self.pipelines[pipeline_id]
-            mapping = placement["mapping"]
-            efforts = placement["efforts"]
-            pipeline.update(effort=efforts["total"])
+            mapping = placement.get("mapping")
+            efforts = placement.get("efforts", {})
+            pipeline.update(effort=efforts.get("total", 0))
 
             for c, node in mapping.items():
                 name, platform = node
-                pipeline.update_component(c, node=name, platform=platform, effort=efforts[c])
+                pipeline.update_component(c, node=name, platform=platform, effort=efforts.get(c, 0))
 
             self._build_pipeline(pipeline_id, mapping)
             self.waiting_list.append(pipeline_id)

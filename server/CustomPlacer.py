@@ -76,7 +76,7 @@ class CustomPlacer(PlacerInterface):
         return placements
 
 
-    def get_efforts(self, pipelines: List[Pipeline]) -> Dict:
+    def get_efforts(self, pipelines: List[Pipeline]) -> Dict[str, Dict]:
         efforts = {}
         
         for pipeline in pipelines:
@@ -181,11 +181,7 @@ class CustomPlacer(PlacerInterface):
             self.data_manager.size_in_memory(dataset, "preprocessed")
         )
 
-        if dataset["type"] == "tabular":
-            node_types = ["low", "med"]
-        elif dataset["type"] == "image":
-            node_types = ["med", "high-cpu"]
-        nodes = self.node_manager.get_nodes(node_types=node_types, sort_params=["memory"])
+        nodes = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])
 
         candidates = []
         for node in nodes:

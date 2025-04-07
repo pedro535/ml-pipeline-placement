@@ -98,7 +98,10 @@ class DataManager:
         version_details = metadata.get(version_key)
 
         if dataset_type == "image":
-            size = self.get_dataset_size(name)        
+            size = self.get_dataset_size(name)
+            if not metadata.get("normalized"):
+                size *= 8  # from uint8 to float64
         elif dataset_type == "tabular":
             size = self._estimate_npy_array_size_kb(version_details)
+        
         return size

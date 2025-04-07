@@ -1,14 +1,14 @@
 from typing import Dict, List
 
-from server import NodeManager, DataManager, Pipeline, PlacerInterface, CustomPlacer
+from server import NodeManager, DataManager, Pipeline, PlacerInterface, CustomPlacer, RandomPlacer, RoundRobinPlacer, GreedyPlacer
 from server.settings import PLACER
 
 
 placers = {
     "custom": CustomPlacer,
-    "random": None,
-    "round_robin": None,
-    "greedy": None
+    "random": RandomPlacer,
+    "round_robin": RoundRobinPlacer,
+    "greedy": GreedyPlacer
 }
 
 

@@ -5,5 +5,8 @@ from .DataManager import DataManager
 from .MLEstimator import MLEstimator
 from .PlacerInterface import PlacerInterface
 from .CustomPlacer import CustomPlacer
+from .RandomPlacer import RandomPlacer
+from .RoundRobinPlacer import RoundRobinPlacer
+from .GreedyPlacer import GreedyPlacer
 from .DecisionUnit import DecisionUnit
 from .PipelineManager import PipelineManager
