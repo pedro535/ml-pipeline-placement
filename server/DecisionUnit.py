@@ -21,6 +21,7 @@ class DecisionUnit:
         self.assignments_counts = {}  # controlled by the placer
         self.placer: PlacerInterface = placers[PLACER](node_manager, data_manager)
         self.init_assignments()
+        print(f"Using {PLACER} placer")
 
 
     def init_assignments(self):

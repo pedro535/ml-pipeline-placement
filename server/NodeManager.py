@@ -104,6 +104,13 @@ class NodeManager:
         self._fetch_nodes()
 
 
+    def get_node_by_name(self, name: str) -> Dict:
+        """
+        Returns the node by its name
+        """
+        return self.nodes.get(name)
+
+
     def get_nodes(
         self,
         node_types: List[str] = [],
