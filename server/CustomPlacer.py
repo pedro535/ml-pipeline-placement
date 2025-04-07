@@ -55,17 +55,16 @@ class CustomPlacer(PlacerInterface):
         for pipeline_id, _ in run_order:
             pipeline = pipelines_dict[pipeline_id]
             metadata = pipeline.get_metadata()
-            components_type = metadata["components_type"]
             mapping = {}
-            
-            for component, c_type in components_type.items():
-                if c_type in self.placement_strategies:
-                    strategy_fn = self.placement_strategies[c_type]
+
+            for component in pipeline.get_components():
+                if component.type in self.placement_strategies:
+                    strategy_fn = self.placement_strategies[component.type]
                     node, platform = strategy_fn(pipeline_id, metadata)
-                    mapping[component] = (node, platform)
-                    self.add_assignment(node, pipeline_id, component)
+                    mapping[component.name] = (node, platform)
+                    self.add_assignment(node, pipeline_id, component.name)
                 else:
-                    print(f"Unknown component type: {c_type}")
+                    print(f"Unknown component type: {component.type}")
             
             placements.append({
                 "pipeline_id": pipeline_id,
@@ -96,12 +95,10 @@ class CustomPlacer(PlacerInterface):
 
 
     def component_effort(self, component: Component, metadata: Dict) -> int:
-        c_type = metadata["components_type"][component.name]
-
-        if c_type in self.effort_calculators:
-            return self.effort_calculators[c_type](metadata)
+        if component.type in self.effort_calculators:
+            return self.effort_calculators[component.type](metadata)
         else:
-            print(f"Unknown component type: {c_type}")
+            print(f"Unknown component type: {component.type}")
             return 0
 
 
@@ -166,6 +163,9 @@ class CustomPlacer(PlacerInterface):
             if pipeline_id in pipelines:
                 nodes.append(node)
 
+        if not nodes and not candidates:
+            return self.fallback_node()
+
         common_nodes = [c for c in candidates if c["name"] in nodes]
         candidates = common_nodes if common_nodes else candidates
 
@@ -181,18 +181,8 @@ class CustomPlacer(PlacerInterface):
             self.data_manager.size_in_memory(dataset, "preprocessed")
         )
 
-        nodes = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])
-
-        candidates = []
-        for node in nodes:
-            memory = node["memory"]
-            memory_usage = node["memory_usage"]
-            memory_free = memory - (memory * memory_usage)
-            memory_required = size * 1.5
-            
-            if memory_free > memory_required:
-                candidates.append(node)
-            
+        candidates = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])
+        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
         return node["name"], node["architecture"]
 
@@ -201,6 +191,7 @@ class CustomPlacer(PlacerInterface):
         # Dataset
         dataset = metadata["dataset"]
         size = self.data_manager.size_in_memory(dataset, "preprocessed")
+        size = int(size * metadata["dataset"]["train_percentage"])
 
         # Model
         model = metadata["model"]["type"]
@@ -216,6 +207,7 @@ class CustomPlacer(PlacerInterface):
 
         # Get nodes
         candidates = self.node_manager.get_nodes(node_types=node_types, sort_params=["cpu_cores", "memory"])
+        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
         return node["name"], node["architecture"]
 
@@ -224,6 +216,7 @@ class CustomPlacer(PlacerInterface):
         # Dataset
         dataset = metadata["dataset"]
         size = self.data_manager.size_in_memory(dataset, "preprocessed")
+        size = int(size * metadata["dataset"]["test_percentage"])
 
         # Model
         model = metadata["model"]["type"]
@@ -239,5 +232,22 @@ class CustomPlacer(PlacerInterface):
 
         # Get nodes
         candidates = self.node_manager.get_nodes(node_types=node_types, sort_params=["cpu_cores", "memory"])
+        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
         return node["name"], node["architecture"]
+    
+    
+    def size_fits_in_node(self, size: int, node: Dict) -> bool:
+        memory = node["memory"]
+        memory_usage = node["memory_usage"]
+        memory_free = memory - (memory * memory_usage)
+        memory_required = size * 1.5
+        return memory_free > memory_required
+    
+
+    def fallback_node(self) -> Dict:
+        # Fallback to high-cpu nodes
+        nodes = self.node_manager.get_nodes(node_types=["high-cpu"], sort_params=["cpu_cores", "memory"])
+        overload = [(node, self.assignments_counts[node["name"]]) for node in nodes]
+        overload = sorted(overload, key=lambda x: x[1])
+        return overload[0][0]

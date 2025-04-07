@@ -1,0 +1,252 @@
+[
+    {
+        "id": "0c8b2fe2-7a38-4dd8-a78c-c028821143e1",
+        "name": "adult_income_dt",
+        "kfp_id": "dec5997f-a81f-4e2f-a110-02cc9953ed71",
+        "state": "SUCCEEDED",
+        "effort": 11519538,
+        "submitted_at": "2025-04-07 22:27:38.937174+00:00",
+        "scheduled_at": "2025-04-07 22:27:48+00:00",
+        "finished_at": "2025-04-07 22:31:38+00:00",
+        "last_update": "2025-04-07 22:31:42.531825+00:00",
+        "duration": 230.0,
+        "components": {
+            "data-preprocessing": {
+                "name": "data-preprocessing",
+                "filename": "data_preprocessing.py",
+                "type": "preprocessing",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-low-03",
+                "platform": "arm64",
+                "effort": 683788,
+                "start_time": "2025-04-07 22:28:08+00:00",
+                "end_time": "2025-04-07 22:28:58+00:00",
+                "duration": 50.0
+            },
+            "model-training": {
+                "name": "model-training",
+                "filename": "model_training.py",
+                "type": "training",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-low-03",
+                "platform": "arm64",
+                "effort": 10687320,
+                "start_time": "2025-04-07 22:29:20+00:00",
+                "end_time": "2025-04-07 22:30:19+00:00",
+                "duration": 59.0
+            },
+            "model-evaluation": {
+                "name": "model-evaluation",
+                "filename": "model_evaluation.py",
+                "type": "evaluation",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-low-03",
+                "platform": "arm64",
+                "effort": 148430,
+                "start_time": "2025-04-07 22:30:54+00:00",
+                "end_time": "2025-04-07 22:31:38+00:00",
+                "duration": 44.0
+            }
+        }
+    },
+    {
+        "id": "f6f3394a-ec90-470d-9f01-c476f94d8203",
+        "name": "adult_income_lr",
+        "kfp_id": "096246de-367e-47ab-a551-2f66e9392764",
+        "state": "SUCCEEDED",
+        "effort": 72288820,
+        "submitted_at": "2025-04-07 22:27:39.625386+00:00",
+        "scheduled_at": "2025-04-07 22:27:49+00:00",
+        "finished_at": "2025-04-07 22:31:35+00:00",
+        "last_update": "2025-04-07 22:31:37.803585+00:00",
+        "duration": 226.0,
+        "components": {
+            "data-preprocessing": {
+                "name": "data-preprocessing",
+                "filename": "data_preprocessing.py",
+                "type": "preprocessing",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-low-01",
+                "platform": "amd64",
+                "effort": 683788,
+                "start_time": "2025-04-07 22:28:31+00:00",
+                "end_time": "2025-04-07 22:29:56+00:00",
+                "duration": 85.0
+            },
+            "model-training": {
+                "name": "model-training",
+                "filename": "model_training.py",
+                "type": "training",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-low-01",
+                "platform": "amd64",
+                "effort": 71248800,
+                "start_time": "2025-04-07 22:30:19+00:00",
+                "end_time": "2025-04-07 22:30:58+00:00",
+                "duration": 39.0
+            },
+            "model-evaluation": {
+                "name": "model-evaluation",
+                "filename": "model_evaluation.py",
+                "type": "evaluation",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-low-01",
+                "platform": "amd64",
+                "effort": 356232,
+                "start_time": "2025-04-07 22:31:08+00:00",
+                "end_time": "2025-04-07 22:31:35+00:00",
+                "duration": 27.0
+            }
+        }
+    },
+    {
+        "id": "cc1a00bc-cc5c-40f6-ada8-d15c6e19ff10",
+        "name": "mnist_nn1",
+        "kfp_id": "81847e19-30e3-4825-8b1b-d638a73c55c7",
+        "state": "SUCCEEDED",
+        "effort": 58470860000,
+        "submitted_at": "2025-04-07 22:27:40.313492+00:00",
+        "scheduled_at": "2025-04-07 22:27:52+00:00",
+        "finished_at": "2025-04-07 22:32:00+00:00",
+        "last_update": "2025-04-07 22:32:02.711512+00:00",
+        "duration": 248.0,
+        "components": {
+            "data-preprocessing": {
+                "name": "data-preprocessing",
+                "filename": "data_preprocessing.py",
+                "type": "preprocessing",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-med-02",
+                "platform": "amd64",
+                "effort": 54880000,
+                "start_time": "2025-04-07 22:28:23+00:00",
+                "end_time": "2025-04-07 22:28:52+00:00",
+                "duration": 29.0
+            },
+            "model-training": {
+                "name": "model-training",
+                "filename": "model_training.py",
+                "type": "training",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-high-cpu-01",
+                "platform": "amd64",
+                "effort": 56991200000,
+                "start_time": "2025-04-07 22:29:18+00:00",
+                "end_time": "2025-04-07 22:31:21+00:00",
+                "duration": 123.0
+            },
+            "model-evaluation": {
+                "name": "model-evaluation",
+                "filename": "model_evaluation.py",
+                "type": "evaluation",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-med-02",
+                "platform": "amd64",
+                "effort": 1424780000,
+                "start_time": "2025-04-07 22:31:31+00:00",
+                "end_time": "2025-04-07 22:32:00+00:00",
+                "duration": 29.0
+            }
+        }
+    },
+    {
+        "id": "1f80b428-5d2e-48d0-acd0-a8f3aaad2ce1",
+        "name": "unsw_nb15_nn",
+        "kfp_id": "6eef9cfd-2d9a-4f9b-bfe6-f39c092b292c",
+        "state": "SUCCEEDED",
+        "effort": 51198534503,
+        "submitted_at": "2025-04-07 22:27:40.997208+00:00",
+        "scheduled_at": "2025-04-07 22:27:51+00:00",
+        "finished_at": "2025-04-07 22:47:27+00:00",
+        "last_update": "2025-04-07 22:47:32.530181+00:00",
+        "duration": 1176.0,
+        "components": {
+            "data-preprocessing": {
+                "name": "data-preprocessing",
+                "filename": "data_preprocessing.py",
+                "type": "preprocessing",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-med-01",
+                "platform": "amd64",
+                "effort": 11079939,
+                "start_time": "2025-04-07 22:28:11+00:00",
+                "end_time": "2025-04-07 22:28:43+00:00",
+                "duration": 32.0
+            },
+            "model-training": {
+                "name": "model-training",
+                "filename": "model_training.py",
+                "type": "training",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-high-cpu-03",
+                "platform": "arm64",
+                "effort": 49938991880,
+                "start_time": "2025-04-07 22:29:15+00:00",
+                "end_time": "2025-04-07 22:46:42+00:00",
+                "duration": 1047.0
+            },
+            "model-evaluation": {
+                "name": "model-evaluation",
+                "filename": "model_evaluation.py",
+                "type": "evaluation",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-med-01",
+                "platform": "amd64",
+                "effort": 1248462684,
+                "start_time": "2025-04-07 22:46:52+00:00",
+                "end_time": "2025-04-07 22:47:27+00:00",
+                "duration": 35.0
+            }
+        }
+    },
+    {
+        "id": "bc0d4681-f734-4686-b819-03a9deb1e377",
+        "name": "unsw_nb15_rf",
+        "kfp_id": "1269550b-3de2-4b42-a6e6-188ba9797792",
+        "state": "SUCCEEDED",
+        "effort": 14481966539,
+        "submitted_at": "2025-04-07 22:27:41.685838+00:00",
+        "scheduled_at": "2025-04-07 22:27:50+00:00",
+        "finished_at": "2025-04-07 22:31:25+00:00",
+        "last_update": "2025-04-07 22:31:28.031573+00:00",
+        "duration": 215.0,
+        "components": {
+            "data-preprocessing": {
+                "name": "data-preprocessing",
+                "filename": "data_preprocessing.py",
+                "type": "preprocessing",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-low-02",
+                "platform": "amd64",
+                "effort": 11079939,
+                "start_time": "2025-04-07 22:28:10+00:00",
+                "end_time": "2025-04-07 22:28:42+00:00",
+                "duration": 32.0
+            },
+            "model-training": {
+                "name": "model-training",
+                "filename": "model_training.py",
+                "type": "training",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-med-03",
+                "platform": "arm64",
+                "effort": 14367818600,
+                "start_time": "2025-04-07 22:29:05+00:00",
+                "end_time": "2025-04-07 22:30:45+00:00",
+                "duration": 100.0
+            },
+            "model-evaluation": {
+                "name": "model-evaluation",
+                "filename": "model_evaluation.py",
+                "type": "evaluation",
+                "state": "SUCCEEDED",
+                "node": "ml-worker-low-02",
+                "platform": "amd64",
+                "effort": 103068000,
+                "start_time": "2025-04-07 22:30:56+00:00",
+                "end_time": "2025-04-07 22:31:25+00:00",
+                "duration": 29.0
+            }
+        }
+    }
+]
