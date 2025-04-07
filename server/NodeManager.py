@@ -2,10 +2,11 @@ import requests
 from typing import List, Dict
 from kubernetes import config, client
 
-from server.settings import DEBUG, KUBE_CONFIG, PROMETHEUS_URL, NODE_EXPORTER_PORT
+from server.settings import DEBUG, KUBE_CONFIG, PROMETHEUS_URL, NODE_EXPORTER_PORT, KUBE_APISERVER_PORT
 
 
 class NodeManager:
+
     def __init__(self):
         self._load_kube_config()
         self.kube_client = client.CoreV1Api()
@@ -41,19 +42,19 @@ class NodeManager:
             node_ip = node.status.addresses[0].address
             labels = node.metadata.labels
             info = node.status.node_info
+            memory = int(node.status.allocatable["memory"][:-2])
 
             self.nodes[node_name] = {
                 "name": node_name,
                 "worker_type": labels.get("worker-type"),
                 "ip": node_ip,
-                "cpu_cores": int(node.status.allocatable["cpu"]),
-                "memory": int(node.status.allocatable["memory"][:-2]),
                 "os": info.operating_system,
                 "os_image": info.os_image,
                 "kernel_version": info.kernel_version,
                 "architecture": info.architecture,
-                "cpu_usage": self._get_cpu_usage(node_ip),
-                "memory_usage": self._get_memory_usage(node_ip)
+                "cpu_cores": int(node.status.allocatable["cpu"]),
+                "memory": memory,
+                "memory_usage": self._get_memory_usage(node_ip, memory)
             }
 
 
@@ -64,38 +65,56 @@ class NodeManager:
         self.availability = {node_name: True for node_name in self.nodes}
 
 
-    def _get_prometheus_metric(self, query: str) -> float:
+    def _get_memory_usage(self, node_ip: str, total_memory: int) -> float:
+        """
+        Analyze memory usage on the node.
+        """
+        free_memory_avg = self._get_free_memory_avg(node_ip)
+        kfp_memory_usage_avg = self._get_kfp_memory_usage_avg(node_ip)
+        memory_usage_no_kfp = total_memory - free_memory_avg - kfp_memory_usage_avg
+        memory_usage = memory_usage_no_kfp / total_memory
+        return round(memory_usage, 2)
+        
+
+    def _get_prometheus_metric(self, query: str) -> int:
         """
         Query Prometheus and return the result value.
         """
         response = requests.get(PROMETHEUS_URL, params={"query": query}).json()
         try:
             result = response["data"]["result"][0]
-            return round(float(result["value"][1]), 2)
+            return int(result["value"][1])
         except (IndexError, KeyError, ValueError):
-            return 0.0
+            return 0
 
 
-    def _get_cpu_usage(self, node_ip: str) -> float:
+    def _get_free_memory_avg(self, node_ip: str) -> int:
         """
-        Calculate CPU usage ratio (0 to 1) for a node.
-        """
-        instance = f"{node_ip}:{NODE_EXPORTER_PORT}"
-        query = f'1 - avg(rate(node_cpu_seconds_total{{mode="idle", instance="{instance}"}}[30s]))'
-        return self._get_prometheus_metric(query)
-
-
-    def _get_memory_usage(self, node_ip: str) -> float:
-        """
-        Calculate memory usage ratio (0 to 1) for a node.
+        Calculate average free memory (in KB) for a node (over 5 minutes).
         """
         instance = f"{node_ip}:{NODE_EXPORTER_PORT}"
         query = (
-            f'1 - (node_memory_MemAvailable_bytes{{instance="{instance}"}} / '
-            f'node_memory_MemTotal_bytes{{instance="{instance}"}})'
+            f'round('
+            f'avg_over_time(node_memory_MemAvailable_bytes{{instance="{instance}"}}[5m:]) '
+            f'/ 1024)'
+        )   
+        return self._get_prometheus_metric(query)
+
+
+    def _get_kfp_memory_usage_avg(self, node_ip: str) -> int:
+        """
+        Calculate average memory usage (in KB) for KFP containers on a node (over 5 minutes).
+        """
+        instance = f"{node_ip}:{KUBE_APISERVER_PORT}"
+        query = (
+            f'round('
+            f'avg_over_time('
+            f'sum by (instance) (container_memory_usage_bytes{{namespace="kubeflow", instance="{instance}", container!=""}})[5m:]'
+            f') / 1024'
+            f')'
         )
         return self._get_prometheus_metric(query)
-    
+
 
     def update_nodes(self):
         """

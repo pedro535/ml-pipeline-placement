@@ -15,6 +15,7 @@ PIPELINES_DIR = os.getenv("PIPELINES_DIR", "./pipelines")
 WAIT_INTERVAL = int(os.getenv("WAIT_INTERVAL", "10"))
 UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", "5"))
 NODE_EXPORTER_PORT = int(os.getenv("NODE_EXPORTER_PORT", "9100"))
+KUBE_APISERVER_PORT = int(os.getenv("KUBE_APISERVER_PORT", "10250"))
 PIPELINE_FILENAME = "pipeline.py"
 KFP_PREFIX = "kfp_"
 METADATA_FILENAME = "metadata.json"
