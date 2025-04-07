@@ -105,7 +105,7 @@ class PipelineManager:
         pipeline.update_components_kfp(task_details)
 
         for c in pipeline.get_components():
-            if c.state == "SUCCEEDED":
+            if c.state in ["SUCCEEDED", "FAILED"]:
                 self.decision_unit.rm_assignment(c.node, pipeline_id, c.name)
                 if not self.decision_unit.is_node_needed(c.node, pipeline_id):
                     self.node_manager.release_nodes([c.node])

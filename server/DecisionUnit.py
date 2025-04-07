@@ -1,6 +1,15 @@
 from typing import Dict, List
 
-from server import NodeManager, DataManager, Pipeline, PlacerInterface, CustomPlacer, RandomPlacer, RoundRobinPlacer, GreedyPlacer
+from server import (
+    NodeManager,
+    DataManager,
+    Pipeline,
+    PlacerInterface,
+    CustomPlacer,
+    RandomPlacer,
+    RoundRobinPlacer,
+    GreedyPlacer
+)
 from server.settings import PLACER
 
 
@@ -17,9 +26,9 @@ class DecisionUnit:
     def __init__(self, node_manager: NodeManager, data_manager: DataManager):
         self.node_manager = node_manager
         self.data_manager = data_manager
+        self.placer: PlacerInterface = placers[PLACER](node_manager, data_manager)
         self.assignments = {}         # controlled by the placer
         self.assignments_counts = {}  # controlled by the placer
-        self.placer: PlacerInterface = placers[PLACER](node_manager, data_manager)
         self.init_assignments()
         print(f"Using {PLACER} placer")
 
@@ -48,9 +57,7 @@ class DecisionUnit:
 
     def get_placements(self, pipelines: List[Pipeline]) -> List[Dict]:
         placements = self.placer.place_pipelines(
-            pipelines,
-            self.assignments,
-            self.assignments_counts
+            pipelines, self.assignments, self.assignments_counts
         )
         
         return placements
