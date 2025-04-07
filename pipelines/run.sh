@@ -8,10 +8,10 @@ python pipeline.py
 sleep 0.5
 cd ..
 
-cd RF
-python pipeline.py
-sleep 0.5
-cd ..
+# cd RF
+# python pipeline.py
+# sleep 0.5
+# cd ..
 
 cd LR
 python pipeline.py
@@ -19,17 +19,36 @@ sleep 0.5
 cd ../../
 
 
-# KDDCUP99
-cd kddcup99
+# # KDDCUP99
+# cd kddcup99
 
-cd RF
+# cd RF
+# python pipeline.py
+# sleep 0.5
+# cd ..
+
+# cd SVM
+# python pipeline.py
+# sleep 0.5
+# cd ../../
+
+
+# MNIST
+cd MNIST
+
+# cd LR
+# python pipeline.py
+# sleep 0.5
+# cd ..
+
+cd NN1
 python pipeline.py
 sleep 0.5
-cd ..
+# cd ..
 
-cd SVM
-python pipeline.py
-sleep 0.5
+# cd NN2
+# python pipeline.py
+# sleep 0.5
 cd ../../
 
 
@@ -46,26 +65,7 @@ python pipeline.py
 sleep 0.5
 cd ..
 
-cd SVM
-python pipeline.py
-sleep 0.5
-cd ../../
-
-
-# MNIST
-cd MNIST
-
-cd LR
-python pipeline.py
-sleep 0.5
-cd ..
-
-cd NN1
-python pipeline.py
-sleep 0.5
-cd ..
-
-# cd NN2
+# cd SVM
 # python pipeline.py
 # sleep 0.5
 # cd ../../
