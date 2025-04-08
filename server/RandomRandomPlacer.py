@@ -7,7 +7,7 @@ from server.settings import SEED
 random.seed(SEED)
 
 
-class RandomPlacer(PlacerInterface):
+class RandomRandomPlacer(PlacerInterface):
 
     def __init__(self, node_manager: NodeManager, data_manager: DataManager):
         self.node_manager = node_manager
@@ -30,8 +30,11 @@ class RandomPlacer(PlacerInterface):
         
         self.assignments = assignments
         self.assignments_counts = assignments_counts
-
         self.node_manager.update_nodes()
+
+        # Random execution order
+        random.shuffle(pipelines)
+
         placements = []
         for pipeline in pipelines:
             metadata = pipeline.get_metadata()

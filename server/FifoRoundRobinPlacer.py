@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple, Set
 from server import PlacerInterface, NodeManager, DataManager, Pipeline, Component
 
 
-class RoundRobinPlacer(PlacerInterface):
+class FifoRoundRobinPlacer(PlacerInterface):
 
     def __init__(self, node_manager: NodeManager, data_manager: DataManager):
         self.node_manager = node_manager

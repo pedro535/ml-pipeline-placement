@@ -6,18 +6,20 @@ from server import (
     Pipeline,
     PlacerInterface,
     CustomPlacer,
-    RandomPlacer,
-    RoundRobinPlacer,
-    GreedyPlacer
+    FifoRandomPlacer,
+    FifoRoundRobinPlacer,
+    FifoGreedyPlacer,
+    RandomRandomPlacer
 )
 from server.settings import PLACER
 
 
 placers = {
     "custom": CustomPlacer,
-    "random": RandomPlacer,
-    "round_robin": RoundRobinPlacer,
-    "greedy": GreedyPlacer
+    "fifo_random": FifoRandomPlacer,
+    "fifo_round_robin": FifoRoundRobinPlacer,
+    "fifo_greedy": FifoGreedyPlacer,
+    "random_random": RandomRandomPlacer,
 }
 
 
