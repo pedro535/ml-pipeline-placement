@@ -181,7 +181,9 @@ class CustomPlacer(PlacerInterface):
             self.data_manager.size_in_memory(dataset, "preprocessed")
         )
 
-        candidates = self.node_manager.get_nodes(node_types=["low", "med"], sort_params=["memory"])
+        filters = {"worker_type": ["low", "med"]}
+        sort_params = ["cpu_cores", "memory"]
+        candidates = self.node_manager.get_nodes(filters=filters, sort_params=sort_params)
         candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
         return node["name"], node["architecture"]
@@ -196,17 +198,26 @@ class CustomPlacer(PlacerInterface):
         # Model
         model = metadata["model"]["type"]
         if model in ["logistic_regression", "linear_regression", "decision_tree"]:
-            node_types = ["low", "med"]
+            filters = {"worker_type": ["low", "med"]}
+            sort_params = ["cpu_cores", "memory"]
+            descending = False
         elif model in ["random_forest", "svm"]:
-            node_types = ["med"]
+            filters = {"worker_type": ["med", "high-cpu"]}
+            sort_params = ["n_cpu_flags", "cpu_cores"]
+            descending = False
         elif model in ["nn", "cnn"]:
-            node_types = ["high-cpu"]
+            filters = {
+                "worker_type": ["high-cpu"],
+                "architecture": "amd64"
+            }
+            sort_params = ["cpu_cores"]
+            descending = True
         else:
             print(f"Unknown model type: {model}")
-            node_types = ["med"]
+            filters = {"worker_type": ["med"]}
 
         # Get nodes
-        candidates = self.node_manager.get_nodes(node_types=node_types, sort_params=["cpu_cores", "memory"])
+        candidates = self.node_manager.get_nodes(filters=filters, sort_params=sort_params, descending=descending)
         candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
         return node["name"], node["architecture"]
@@ -221,17 +232,17 @@ class CustomPlacer(PlacerInterface):
         # Model
         model = metadata["model"]["type"]
         if model in ["logistic_regression", "linear_regression", "decision_tree"]:
-            node_types = ["low", "med"]
+            filters = {"worker_type": ["low", "med"]}
         elif model in ["random_forest", "svm"]:
-            node_types = ["low", "med"]
+            filters = {"worker_type": ["low", "med"]}
         elif model in ["nn", "cnn"]:
-            node_types = ["med", "high-cpu"]
+            filters = {"worker_type": ["med", "high-cpu"]}
         else:
             print(f"Unknown model type: {model}")
-            node_types = ["med"]
+            filters = {"worker_type": ["med"]}
 
         # Get nodes
-        candidates = self.node_manager.get_nodes(node_types=node_types, sort_params=["cpu_cores", "memory"])
+        candidates = self.node_manager.get_nodes(filters=filters, sort_params=["cpu_cores", "memory"])
         candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
         return node["name"], node["architecture"]
@@ -247,7 +258,8 @@ class CustomPlacer(PlacerInterface):
 
     def fallback_node(self) -> Dict:
         # Fallback to high-cpu nodes
-        nodes = self.node_manager.get_nodes(node_types=["high-cpu"], sort_params=["cpu_cores", "memory"])
+        filters = {"worker_type": ["high-cpu"]}
+        nodes = self.node_manager.get_nodes(filters=filters)
         overload = [(node, self.assignments_counts[node["name"]]) for node in nodes]
         overload = sorted(overload, key=lambda x: x[1])
         return overload[0][0]

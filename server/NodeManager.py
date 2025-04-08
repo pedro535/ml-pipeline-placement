@@ -38,6 +38,10 @@ class NodeManager:
             if "agent" not in annotations:
                 continue
 
+            # Discard gpu nodes - not supported yet
+            if "gpu" in node.metadata.name:
+                continue
+
             node_name = node.metadata.name
             node_ip = node.status.addresses[0].address
             labels = node.metadata.labels
@@ -53,6 +57,7 @@ class NodeManager:
                 "kernel_version": info.kernel_version,
                 "architecture": info.architecture,
                 "cpu_cores": int(node.status.allocatable["cpu"]),
+                "n_cpu_flags": int(labels.get("n_cpu_flags", 0)),
                 "memory": memory,
                 "memory_usage": self._get_memory_usage(node_ip, memory)
             }
@@ -132,30 +137,35 @@ class NodeManager:
 
     def get_nodes(
         self,
-        node_types: List[str] = [],
+        filters: Dict = {},
         sort_params: List[str] = [],
         descending: bool = False
     ) -> List[Dict]:
         """
         Get node details, optionally filtered by worker type and sorted.
 
-        :param node_types: List of worker types to include
+        :param filters: Additional filters to apply to nodes
         :param sort_params: Fields to sort nodes by
         :param descending: Whether to sort in descending order
         :return: List of node metadata dictionaries
         """
-        filtered_nodes = [
-            node for node in self.nodes.values()
-            if not node_types or node["worker_type"] in node_types
-        ]
+        nodes = list(self.nodes.values())
 
+        # Apply filters
+        if filters:
+            for node in self.nodes.values():
+                for k, v in filters.items():
+                    if (isinstance(v, list) and node[k] not in v) or (not isinstance(v, list) and node[k] != v):
+                        nodes.remove(node)
+                        break
+                
         if sort_params:
-            filtered_nodes.sort(
+            nodes.sort(
                 key=lambda node: [node[param] for param in sort_params],
                 reverse=descending
             )
 
-        return filtered_nodes
+        return nodes
 
 
     def nodes_available(self, node_names: List[str]) -> bool:
