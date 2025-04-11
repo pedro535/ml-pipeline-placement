@@ -32,7 +32,6 @@ class DecisionUnit:
         self.assignments = {}         # controlled by the placer
         self.assignments_counts = {}  # controlled by the placer
         self.init_assignments()
-        print(f"Using {PLACER} placer")
 
 
     def init_assignments(self):

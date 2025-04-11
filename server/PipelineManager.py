@@ -2,11 +2,13 @@ from queue import Queue
 from typing import List, Dict, Tuple
 import subprocess
 from kfp import Client
+import requests
 import json
 
 from server import DecisionUnit, NodeManager, Pipeline, Component
 from server.settings import (
     KFP_URL,
+    KFP_API_ENDPOINT,
     ENABLE_CACHING,
     PIPELINE_FILENAME,
     KFP_PREFIX,
@@ -74,8 +76,13 @@ class PipelineManager:
         # Update running pipelines
         for pipeline_id in self.running_pipelines:
             pipeline = self.pipelines[pipeline_id]
+            if pipeline.kfp_id is None:
+                self._update_kfp_id(pipeline)
+            if pipeline.kfp_id is None:
+                print("Kfp id still unavailable for pipeline: ", pipeline_id)
+                continue
+            
             run_details = self.kfp_client.get_run(pipeline.kfp_id).to_dict()
-
             self._update_components(pipeline_id, run_details)
             pipeline.update_kfp(run_details)
         
@@ -105,7 +112,7 @@ class PipelineManager:
         pipeline.update_components_kfp(task_details)
 
         for c in pipeline.get_components():
-            if c.state in ["SUCCEEDED", "FAILED"]:
+            if c.state == "SUCCEEDED":
                 self.decision_unit.rm_assignment(c.node, pipeline_id, c.name)
                 if not self.decision_unit.is_node_needed(c.node, pipeline_id):
                     self.node_manager.release_nodes([c.node])
@@ -148,18 +155,34 @@ class PipelineManager:
         pipeline = self.pipelines[pipeline_id]
 
         try:
+            print("----- Running pipeline: ", pipeline_id)
             run = subprocess.run(
                 args=["python3", pipelines_dir / pipeline_id / f"{KFP_PREFIX}{PIPELINE_FILENAME}"],
                 capture_output=True,
                 cwd=pipelines_dir / pipeline_id
             )
             output = run.stdout.decode("utf-8")
+            print("----- Pipeline output:")
+            print(output)
             kfp_id = output.split("Run ID:")[-1].strip()
             pipeline.update(kfp_id=kfp_id, state="RUNNING")
 
         except Exception as e:
             print("Error while running pipeline:", e)
             pipeline.update(state="FAILED")
+
+
+    def _update_kfp_id(self, pipeline: Pipeline):
+        url = f"{self.kfp_url}{KFP_API_ENDPOINT}/runs"
+        name = pipeline.name.lower().replace("_", "-")
+        try:
+            response = requests.get(url).json()
+            runs = response.get("runs", [])
+            for run in runs:
+                if run["display_name"].startswith(name):
+                    pipeline.update(kfp_id=run["run_id"])
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching runs from KFP API")
 
     
     def print_running_pipelines(self):

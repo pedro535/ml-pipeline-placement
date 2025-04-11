@@ -181,9 +181,8 @@ class CustomPlacer(PlacerInterface):
             self.data_manager.size_in_memory(dataset, "preprocessed")
         )
 
-        filters = {"worker_type": ["low", "med"]}
-        sort_params = ["cpu_cores", "memory"]
-        candidates = self.node_manager.get_nodes(filters=filters, sort_params=sort_params)
+        # criteria: node that fits the data
+        candidates = self.node_manager.get_nodes(sort_params=["memory"])
         candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
         return node["name"], node["architecture"]
