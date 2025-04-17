@@ -4,7 +4,7 @@ from fastapi import FastAPI, UploadFile, Form, File
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from server import PipelineManager, DecisionUnit, NodeManager, DataManager
+from server.components import PipelineManager, DecisionUnit, NodeManager, DataManager
 from server.settings import (
     WAIT_INTERVAL,
     UPDATE_INTERVAL,

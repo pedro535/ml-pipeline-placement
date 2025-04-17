@@ -6,7 +6,7 @@ import requests
 import json
 
 from server.ml_pipeline import Pipeline, Component
-from server import DecisionUnit, NodeManager
+from server.components import DecisionUnit, NodeManager
 from server.settings import (
     KFP_URL,
     KFP_API_ENDPOINT,

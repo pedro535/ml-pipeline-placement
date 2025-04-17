@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple, Set
 
 from server.placers import PlacerInterface
 from server.ml_pipeline import Pipeline, Component
-from server import NodeManager, DataManager
+from server.components import NodeManager, DataManager
 
 
 class FifoGreedyPlacer(PlacerInterface):

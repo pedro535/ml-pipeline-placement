@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict
 
 from server.ml_pipeline import Pipeline
-from server import NodeManager, DataManager
+from server.components import NodeManager, DataManager
 
 
 class PlacerInterface(ABC):

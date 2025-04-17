@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from server.settings import PLACER
 from server.ml_pipeline import Pipeline
-from server import NodeManager, DataManager
+from server.components import NodeManager, DataManager
 from server.placers import (
     PlacerInterface,
     CustomPlacer,
