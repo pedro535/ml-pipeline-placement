@@ -1,0 +1,31 @@
+from server.estimators import EstimatorInterface
+
+
+class LinearRegression(EstimatorInterface):
+
+    @staticmethod
+    def estimate_train(params):
+        n_samples = params["n_samples"]
+        n_features = params["n_features"]
+        solver = params.get("solver", "ols")
+
+        if solver == 'ols':
+            # Ordinary Least Squares (OLS)
+            complexity = n_samples * n_features**2 + n_features**3
+        elif solver == 'sgd':
+            # Stochastic Gradient Descent (SGD)
+            n_iter = params.get('n_iter', 1000)
+            complexity = n_iter * n_samples * n_features
+        else:
+            raise ValueError(f"Unknown solver for linear regression: {solver}")
+        
+        return complexity
+    
+
+    @staticmethod
+    def estimate_pred(params):
+        n_samples = params["n_samples"]
+        n_features = params["n_features"]
+
+        complexity = n_samples * n_features
+        return complexity

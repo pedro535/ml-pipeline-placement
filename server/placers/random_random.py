@@ -1,7 +1,9 @@
 import random
 from typing import Dict, List, Tuple, Set
 
-from server import PlacerInterface, NodeManager, DataManager, Pipeline, Component
+from server.placers import PlacerInterface
+from server.ml_pipeline import Pipeline, Component
+from server import NodeManager, DataManager
 from server.settings import SEED
 
 random.seed(SEED)

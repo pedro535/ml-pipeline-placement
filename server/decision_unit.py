@@ -1,9 +1,9 @@
 from typing import Dict, List
 
-from server import (
-    NodeManager,
-    DataManager,
-    Pipeline,
+from server.settings import PLACER
+from server.ml_pipeline import Pipeline
+from server import NodeManager, DataManager
+from server.placers import (
     PlacerInterface,
     CustomPlacer,
     FifoRandomPlacer,
@@ -11,7 +11,6 @@ from server import (
     FifoGreedyPlacer,
     RandomRandomPlacer
 )
-from server.settings import PLACER
 
 
 placers = {

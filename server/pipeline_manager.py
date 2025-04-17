@@ -5,7 +5,8 @@ from kfp import Client
 import requests
 import json
 
-from server import DecisionUnit, NodeManager, Pipeline, Component
+from server.ml_pipeline import Pipeline, Component
+from server import DecisionUnit, NodeManager
 from server.settings import (
     KFP_URL,
     KFP_API_ENDPOINT,

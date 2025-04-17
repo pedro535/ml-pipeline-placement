@@ -1,6 +1,8 @@
 from typing import Dict, List, Tuple, Set
 
-from server import PlacerInterface, NodeManager, DataManager, MLEstimator, Pipeline, Component
+from server.placers import PlacerInterface
+from server.ml_pipeline import Pipeline, Component
+from server import NodeManager, DataManager, MLEstimator
 
 
 class CustomPlacer(PlacerInterface):

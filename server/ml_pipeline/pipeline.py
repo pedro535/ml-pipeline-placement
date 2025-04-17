@@ -3,7 +3,7 @@ from datetime import datetime
 from dateutil import tz
 import json
 
-from server import Component
+from server.ml_pipeline import Component
 from server.settings import METADATA_FILENAME, EPOCH_DATE, pipelines_dir
 
 

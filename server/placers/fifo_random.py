@@ -1,23 +1,21 @@
-from itertools import cycle
+import random
 from typing import Dict, List, Tuple, Set
 
-from server import PlacerInterface, NodeManager, DataManager, Pipeline, Component
+from server.placers import PlacerInterface
+from server.ml_pipeline import Pipeline, Component
+from server import NodeManager, DataManager
+from server.settings import SEED
+
+random.seed(SEED)
 
 
-class FifoRoundRobinPlacer(PlacerInterface):
+class FifoRandomPlacer(PlacerInterface):
 
     def __init__(self, node_manager: NodeManager, data_manager: DataManager):
         self.node_manager = node_manager
         self.data_manager = data_manager
         self.assignments = None          # attr from DecisionUnit
         self.assignments_counts = None   # attr from DecisionUnit
-        self.nodes_iter = None
-        self.initialize_cycle()
-
-    
-    def initialize_cycle(self):
-        node_names = [n.get("name") for n in self.node_manager.get_nodes()]
-        self.nodes_iter = cycle(node_names)
 
 
     def add_assignment(self, node: str, pipeline_id: str, component: str):
@@ -41,7 +39,7 @@ class FifoRoundRobinPlacer(PlacerInterface):
             metadata = pipeline.get_metadata()
             mapping = {}
             for component in pipeline.get_components():
-                node, platform = self.get_node(component, metadata)
+                node, platform = self.get_random_node(component, metadata)
                 mapping[component.name] = (node, platform)
                 self.add_assignment(node, pipeline.id, component.name)
 
@@ -53,20 +51,19 @@ class FifoRoundRobinPlacer(PlacerInterface):
         return placements
 
 
-    def get_node(self, component: Component, metadata: Dict) -> Tuple:
+    def get_random_node(self, component: Component, metadata: Dict) -> Tuple:
         dataset = metadata["dataset"]
         size = max(
             self.data_manager.size_in_memory(dataset, "original"),
             self.data_manager.size_in_memory(dataset, "preprocessed")
         )
 
-        next_node_name = next(self.nodes_iter)
-        next_node = self.node_manager.get_node_by_name(next_node_name)
-        while not self.size_fits_in_node(size, next_node):
-            next_node_name = next(self.nodes_iter)
-            next_node = self.node_manager.get_node_by_name(next_node_name)
+        nodes = self.node_manager.get_nodes()
+        random_node = random.choice(nodes)
+        while not self.size_fits_in_node(size, random_node):
+            random_node = random.choice(nodes)
 
-        node_name = next_node["name"]
+        node_name = random_node["name"]
         node_platform = self.node_manager.get_node_platform(node_name)
         return node_name, node_platform
 

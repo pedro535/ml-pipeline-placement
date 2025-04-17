@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict
 
-from server import NodeManager, DataManager, Pipeline
+from server.ml_pipeline import Pipeline
+from server import NodeManager, DataManager
 
 
 class PlacerInterface(ABC):
