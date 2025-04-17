@@ -64,7 +64,9 @@ class RandomRandomPlacer(PlacerInterface):
         while not self.size_fits_in_node(size, random_node):
             random_node = random.choice(nodes)
 
-        return random_node["name"], random_node["architecture"]
+        node_name = random_node["name"]
+        node_platform = self.node_manager.get_node_platform(node_name)
+        return node_name, node_platform
 
 
     def size_fits_in_node(self, size: int, node: Dict) -> bool:

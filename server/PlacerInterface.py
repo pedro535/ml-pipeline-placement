@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import List, Dict
 
-from server import NodeManager, DataManager
+from server import NodeManager, DataManager, Pipeline
 
 
 class PlacerInterface(ABC):
@@ -11,6 +12,6 @@ class PlacerInterface(ABC):
         pass
 
     @abstractmethod
-    def place_pipelines(self):
+    def place_pipelines(self, pipelines: List[Pipeline], assignments: dict, assignments_counts: dict) -> List[Dict]:
         """Place pipelines on nodes using a specific strategy."""
         pass

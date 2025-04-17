@@ -66,7 +66,9 @@ class FifoRoundRobinPlacer(PlacerInterface):
             next_node_name = next(self.nodes_iter)
             next_node = self.node_manager.get_node_by_name(next_node_name)
 
-        return next_node["name"], next_node["architecture"]
+        node_name = next_node["name"]
+        node_platform = self.node_manager.get_node_platform(node_name)
+        return node_name, node_platform
 
 
     def size_fits_in_node(self, size: int, node: Dict) -> bool:

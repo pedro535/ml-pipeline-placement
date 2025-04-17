@@ -35,11 +35,8 @@ class NodeManager:
 
         for node in nodes_response.items:
             annotations = node.metadata.annotations.get("k3s.io/node-args", "")
-            if "agent" not in annotations:
-                continue
-
-            # Discard gpu nodes - not supported yet
-            if "gpu" in node.metadata.name:
+            conditions = node.status.conditions
+            if "agent" not in annotations or not self._is_node_ready(conditions):
                 continue
 
             node_name = node.metadata.name
@@ -47,10 +44,9 @@ class NodeManager:
             labels = node.metadata.labels
             info = node.status.node_info
             memory = int(node.status.allocatable["memory"][:-2])
-
             self.nodes[node_name] = {
                 "name": node_name,
-                "worker_type": labels.get("worker-type"),
+                "worker_type": labels.get("worker_type"),
                 "ip": node_ip,
                 "os": info.operating_system,
                 "os_image": info.os_image,
@@ -59,7 +55,8 @@ class NodeManager:
                 "cpu_cores": int(node.status.allocatable["cpu"]),
                 "n_cpu_flags": int(labels.get("n_cpu_flags", 0)),
                 "memory": memory,
-                "memory_usage": self._get_memory_usage(node_ip, memory)
+                "memory_usage": self._get_memory_usage(node_ip, memory),
+                "accelerator": labels.get("accelerator_type")
             }
 
 
@@ -79,6 +76,16 @@ class NodeManager:
         memory_usage_no_kfp = total_memory - free_memory_avg - kfp_memory_usage_avg
         memory_usage = memory_usage_no_kfp / total_memory
         return round(memory_usage, 2)
+    
+
+    def _is_node_ready(self, conditions: List) -> bool:
+        """
+        Check if the node is ready based on its conditions.
+        """
+        for condition in conditions:
+            if condition.type == "Ready":
+                return bool(condition.status)
+        return False
         
 
     def _get_prometheus_metric(self, query: str) -> int:
@@ -196,3 +203,16 @@ class NodeManager:
         """
         for node in node_names:
             self.availability[node] = True
+
+
+    def get_node_platform(self, node: str) -> str:
+        """
+        Get the platform of a node to be used for docker images tagging.
+
+        :param node_name: Name of the node
+        :return: Platform of the node
+        """
+        accelerator = self.nodes[node]["accelerator"]
+        if accelerator != "none":
+            return accelerator
+        return self.nodes[node]["architecture"]

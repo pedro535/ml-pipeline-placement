@@ -47,7 +47,7 @@ class CustomPlacer(PlacerInterface):
         run_order = [(pipeline_id, efforts["total"]) for pipeline_id, efforts in efforts.items()]
         run_order = sorted(run_order, key=lambda x: x[1])
 
-        # Placement
+        # Placement: pipeline-aware heuristic
         self.node_manager.update_nodes()
         pipelines_dict = {pipeline.id: pipeline for pipeline in pipelines}
         placements = []
@@ -185,7 +185,9 @@ class CustomPlacer(PlacerInterface):
         candidates = self.node_manager.get_nodes(sort_params=["memory"])
         candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
-        return node["name"], node["architecture"]
+        node_name = node["name"]
+        node_platform = self.node_manager.get_node_platform(node_name)
+        return node_name, node_platform
 
     
     def training_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
@@ -219,7 +221,9 @@ class CustomPlacer(PlacerInterface):
         candidates = self.node_manager.get_nodes(filters=filters, sort_params=sort_params, descending=descending)
         candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
-        return node["name"], node["architecture"]
+        node_name = node["name"]
+        node_platform = self.node_manager.get_node_platform(node_name)
+        return node_name, node_platform
 
 
     def evaluation_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
@@ -244,8 +248,10 @@ class CustomPlacer(PlacerInterface):
         candidates = self.node_manager.get_nodes(filters=filters, sort_params=["cpu_cores", "memory"])
         candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
         node = self.choose_node(candidates, pipeline_id)
-        return node["name"], node["architecture"]
-    
+        node_name = node["name"]
+        node_platform = self.node_manager.get_node_platform(node_name)
+        return node_name, node_platform
+
     
     def size_fits_in_node(self, size: int, node: Dict) -> bool:
         memory = node["memory"]
