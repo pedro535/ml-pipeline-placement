@@ -130,7 +130,7 @@ class NodeManager:
 
     def update_nodes(self):
         """
-        Update node metadata and metrics.
+        Update nodes metadata and metrics.
         """
         self._fetch_nodes()
 

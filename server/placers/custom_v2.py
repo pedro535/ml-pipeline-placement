@@ -4,6 +4,72 @@ from server.placers import PlacerInterface
 from server.ml_pipeline import Pipeline, Component
 from server.components import NodeManager, DataManager, MLEstimator
 
+accelerator_score = 3
+mapping_criteria = {
+    "training": {
+        "logistic_regression": {
+            "nodes": ["low", "med"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "decision_tree": {
+            "nodes": ["low", "med"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "random_forest": {
+            "nodes": ["med", "high-cpu"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["n_cpu_flags", "cpu_cores"]
+        },
+        "svm": {
+            "nodes": ["med", "high-cpu"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["n_cpu_flags", "cpu_cores"]
+        },
+        "nn": {
+            "nodes": ["high-cpu", "high-gpu"],
+            "architecture": ["amd64"]
+        },
+        "cnn": {
+            "nodes": ["high-cpu", "high-gpu"],
+            "architecture": ["amd64"]
+        }
+    },
+    "evaluation": {
+        "logistic_regression": {
+            "nodes": ["low"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "decision_tree": {
+            "nodes": ["low"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "random_forest": {
+            "nodes": ["low", "med"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "svm": {
+            "nodes": ["low", "med"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "nn": {
+            "nodes": ["med", "high-cpu"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "cnn": {
+            "nodes": ["med", "high-cpu"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        }
+    }
+}
+
 
 class CustomPlacer(PlacerInterface):
 
@@ -156,6 +222,96 @@ class CustomPlacer(PlacerInterface):
                 
         return self.estimator.estimate(model, estimator_params, training=training)
 
+    
+    def preprocessing_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+        dataset = metadata["dataset"]
+        size = max(
+            self.data_manager.size_in_memory(dataset, "original"),
+            self.data_manager.size_in_memory(dataset, "preprocessed")
+        )
+
+        # criteria: node that fits the data
+        filters = {"worker_type": ["low", "med", "high-cpu"]}
+        candidates = self.node_manager.get_nodes(filters=filters, sort_params=["memory"])
+        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
+        node = self.less_overloaded_node(candidates)
+        
+        return (
+            node["name"],
+            self.node_manager.get_node_platform(node["name"])
+        )
+        
+    
+    def training_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+        # Dataset
+        dataset = metadata["dataset"]
+        size = self.data_manager.size_in_memory(dataset, "preprocessed")
+        size = int(size * metadata["dataset"]["train_percentage"])
+
+        # Model
+        model = metadata["model"]["type"]
+        criteria = mapping_criteria["training"][model]
+        filters = {
+            "worker_type": criteria["nodes"],
+            "architecture": criteria["architecture"]
+        }
+
+        if model not in ["nn", "cnn"]:
+            candidates = self.node_manager.get_nodes(filters=filters, sort_params=criteria["sorting"])
+            candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
+            node = self.choose_node(candidates, pipeline_id)
+        else:
+            candidates = self.node_manager.get_nodes(filters=filters)
+            scores = []
+            for node in candidates:
+                has_accelerator = node["accelerator"] != "none"
+                score = - self.assignments_counts[node["name"]] + accelerator_score if has_accelerator else 0
+                score.append((node, score, self.assignments_counts[node["name"]]))
+            candidates = sorted(scores, key=lambda x: (x[1], -x[2]), reverse=True)
+            node = candidates[0][0]
+
+        return (
+            node["name"],
+            self.node_manager.get_node_platform(node["name"])
+        )
+
+
+    def evaluation_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+        # Dataset
+        dataset = metadata["dataset"]
+        size = self.data_manager.size_in_memory(dataset, "preprocessed")
+        size = int(size * metadata["dataset"]["test_percentage"])
+
+        # Model
+        model = metadata["model"]["type"]
+        criteria = mapping_criteria["evaluation"][model]
+        filters = {
+            "worker_type": criteria["nodes"],
+            "architecture": criteria["architecture"]
+        }
+        candidates = self.node_manager.get_nodes(filters=filters, sort_params=criteria["sorting"])
+        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
+        node = self.choose_node(candidates, pipeline_id)
+
+        return (
+            node["name"],
+            self.node_manager.get_node_platform(node["name"])
+        )
+
+
+    def size_fits_in_node(self, size: int, node: Dict) -> bool:
+        memory = node["memory"]
+        memory_usage = node["memory_usage"]
+        memory_free = memory - (memory * memory_usage)
+        memory_required = size * 1.5
+        return memory_free > memory_required
+
+
+    def less_overloaded_node(self, nodes: List[Dict]) -> Dict:
+        overload = [(node, self.assignments_counts[node["name"]]) for node in nodes]
+        overload = sorted(overload, key=lambda x: x[1])
+        return overload[0][0]
+    
 
     def choose_node(self, candidates: List[Dict], pipeline_id: str) -> Dict:
         # Check if the pipeline already has an assignment(s)
@@ -174,94 +330,7 @@ class CustomPlacer(PlacerInterface):
         overload = [(node, self.assignments_counts[node["name"]]) for node in candidates]
         overload = sorted(overload, key=lambda x: x[1])
         return overload[0][0]
-    
-    
-    def preprocessing_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
-        dataset = metadata["dataset"]
-        size = max(
-            self.data_manager.size_in_memory(dataset, "original"),
-            self.data_manager.size_in_memory(dataset, "preprocessed")
-        )
-
-        # criteria: node that fits the data
-        candidates = self.node_manager.get_nodes(sort_params=["memory"])
-        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
-        node = self.choose_node(candidates, pipeline_id)
-        node_name = node["name"]
-        node_platform = self.node_manager.get_node_platform(node_name)
-        return node_name, node_platform
-
-    
-    def training_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
-        # Dataset
-        dataset = metadata["dataset"]
-        size = self.data_manager.size_in_memory(dataset, "preprocessed")
-        size = int(size * metadata["dataset"]["train_percentage"])
-
-        # Model
-        model = metadata["model"]["type"]
-        if model in ["logistic_regression", "linear_regression", "decision_tree"]:
-            filters = {"worker_type": ["low", "med"]}
-            sort_params = ["cpu_cores"]
-            descending = False
-        elif model in ["random_forest", "svm"]:
-            filters = {"worker_type": ["med", "high-cpu"]}
-            sort_params = ["n_cpu_flags", "cpu_cores"]
-            descending = False
-        elif model in ["nn", "cnn"]:
-            filters = {
-                "worker_type": ["high-cpu"],
-                "architecture": "amd64"
-            }
-            sort_params = ["cpu_cores"]
-            descending = True
-        else:
-            print(f"Unknown model type: {model}")
-            filters = {"worker_type": ["med"]}
-
-        # Get nodes
-        candidates = self.node_manager.get_nodes(filters=filters, sort_params=sort_params, descending=descending)
-        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
-        node = self.choose_node(candidates, pipeline_id)
-        node_name = node["name"]
-        node_platform = self.node_manager.get_node_platform(node_name)
-        return node_name, node_platform
-
-
-    def evaluation_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
-        # Dataset
-        dataset = metadata["dataset"]
-        size = self.data_manager.size_in_memory(dataset, "preprocessed")
-        size = int(size * metadata["dataset"]["test_percentage"])
-
-        # Model
-        model = metadata["model"]["type"]
-        if model in ["logistic_regression", "linear_regression", "decision_tree"]:
-            filters = {"worker_type": ["low", "med"]}
-        elif model in ["random_forest", "svm"]:
-            filters = {"worker_type": ["low", "med"]}
-        elif model in ["nn", "cnn"]:
-            filters = {"worker_type": ["med", "high-cpu"]}
-        else:
-            print(f"Unknown model type: {model}")
-            filters = {"worker_type": ["med"]}
-
-        # Get nodes
-        candidates = self.node_manager.get_nodes(filters=filters, sort_params=["cpu_cores", "memory"])
-        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
-        node = self.choose_node(candidates, pipeline_id)
-        node_name = node["name"]
-        node_platform = self.node_manager.get_node_platform(node_name)
-        return node_name, node_platform
-
-    
-    def size_fits_in_node(self, size: int, node: Dict) -> bool:
-        memory = node["memory"]
-        memory_usage = node["memory_usage"]
-        memory_free = memory - (memory * memory_usage)
-        memory_required = size * 1.5
-        return memory_free > memory_required
-    
+        
 
     def fallback_node(self) -> Dict:
         # Fallback to high-cpu nodes
