@@ -266,7 +266,7 @@ class CustomPlacer(PlacerInterface):
             for node in candidates:
                 has_accelerator = node["accelerator"] != "none"
                 score = - self.assignments_counts[node["name"]] + accelerator_score if has_accelerator else 0
-                score.append((node, score, self.assignments_counts[node["name"]]))
+                scores.append((node, score, self.assignments_counts[node["name"]]))
             candidates = sorted(scores, key=lambda x: (x[1], -x[2]), reverse=True)
             node = candidates[0][0]
 
