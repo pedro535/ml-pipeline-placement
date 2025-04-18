@@ -202,7 +202,7 @@ class CustomPlacer(PlacerInterface):
         model = metadata["model"]["type"]
         if model in ["logistic_regression", "linear_regression", "decision_tree"]:
             filters = {"worker_type": ["low", "med"]}
-            sort_params = ["cpu_cores", "memory"]
+            sort_params = ["n_cpu_flags", "cpu_cores"]
             descending = False
         elif model in ["random_forest", "svm"]:
             filters = {"worker_type": ["med", "high-cpu"]}
