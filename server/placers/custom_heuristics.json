@@ -1,0 +1,64 @@
+{
+    "training": {
+        "logistic_regression": {
+            "worker_type": ["low", "med"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "decision_tree": {
+            "worker_type": ["low", "med"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "random_forest": {
+            "worker_type": ["med", "high-cpu"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["n_cpu_flags", "cpu_cores"]
+        },
+        "svm": {
+            "worker_type": ["med", "high-cpu"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["n_cpu_flags", "cpu_cores"]
+        },
+        "nn": {
+            "worker_type": ["high-cpu", "high-gpu"],
+            "architecture": ["amd64"]
+        },
+        "cnn": {
+            "worker_type": ["high-cpu", "high-gpu"],
+            "architecture": ["amd64"]
+        }
+    },
+    "evaluation": {
+        "logistic_regression": {
+            "worker_type": ["low"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "decision_tree": {
+            "worker_type": ["low"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "random_forest": {
+            "worker_type": ["low", "med"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "svm": {
+            "worker_type": ["low", "med"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "nn": {
+            "worker_type": ["med", "high-cpu"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        },
+        "cnn": {
+            "worker_type": ["med", "high-cpu"],
+            "architecture": ["amd64", "arm64"],
+            "sorting": ["cpu_cores"]
+        }
+    }
+}

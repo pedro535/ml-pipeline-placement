@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List, Tuple, Set
 
 from server.placers import PlacerInterface
@@ -13,23 +14,22 @@ class CustomPlacer(PlacerInterface):
         self.estimator = MLEstimator()
         self.assignments = None          # attr from DecisionUnit
         self.assignments_counts = None   # attr from DecisionUnit
+        self.accelerator_score = 3
+
+        with open("placers/custom_heuristics.json", "r") as f:
+            self.heuristics = json.load(f)
 
         self.effort_calculators = {
-            "preprocessing": self.preprocessing_effort,
-            "training": self.training_effort,
-            "evaluation": self.evaluation_effort
+            "preprocessing": self._calc_preprocessing_effort,
+            "training": self._calc_training_effort,
+            "evaluation": self._calc_evaluation_effort
         }
 
-        self.placement_strategies = {
-            "preprocessing": self.preprocessing_node,
-            "training": self.training_node,
-            "evaluation": self.evaluation_node
+        self.node_selectors = {
+            "preprocessing": self._select_preprocessing_node,
+            "training": self._select_training_node,
+            "evaluation": self._select_evaluation_node
         }
-
-    
-    def add_assignment(self, node: str, pipeline_id: str, component: str):
-        self.assignments[node].add(f"{pipeline_id}/{component}")
-        self.assignments_counts[node] += 1
 
 
     def place_pipelines(
@@ -42,31 +42,27 @@ class CustomPlacer(PlacerInterface):
         self.assignments = assignments
         self.assignments_counts = assignments_counts
 
-        # Calculate effort for each pipeline and its components
-        efforts = self.get_efforts(pipelines)
-
         # Scheduling: SJF
-        run_order = [(pipeline_id, efforts["total"]) for pipeline_id, efforts in efforts.items()]
-        run_order = sorted(run_order, key=lambda x: x[1])
+        efforts = self._calc_pipeline_efforts(pipelines)
+        run_order = sorted(
+            list(efforts.keys()),
+            lambda x: efforts[x]["total"]
+        )
 
         # Placement: pipeline-aware heuristic
         self.node_manager.update_nodes()
         pipelines_dict = {pipeline.id: pipeline for pipeline in pipelines}
         placements = []
         
-        for pipeline_id, _ in run_order:
+        for pipeline_id in run_order:
             pipeline = pipelines_dict[pipeline_id]
             metadata = pipeline.get_metadata()
             mapping = {}
-
             for component in pipeline.get_components():
-                if component.type in self.placement_strategies:
-                    strategy_fn = self.placement_strategies[component.type]
-                    node, platform = strategy_fn(pipeline_id, metadata)
-                    mapping[component.name] = (node, platform)
-                    self.add_assignment(node, pipeline_id, component.name)
-                else:
-                    print(f"Unknown component type: {component.type}")
+                strategy_fn = self.node_selectors[component.type]
+                node, platform = strategy_fn(pipeline_id, metadata)
+                mapping[component.name] = (node, platform)
+                self._add_assignment(node, pipeline_id, component.name)
             
             placements.append({
                 "pipeline_id": pipeline_id,
@@ -77,16 +73,14 @@ class CustomPlacer(PlacerInterface):
         return placements
 
 
-    def get_efforts(self, pipelines: List[Pipeline]) -> Dict[str, Dict]:
+    def _calc_pipeline_efforts(self, pipelines: List[Pipeline]) -> Dict[str, Dict]:
         efforts = {}
-        
         for pipeline in pipelines:
             metadata = pipeline.get_metadata()
             pipeline_efforts = {}
             total_effort = 0
-
             for component in pipeline.get_components():
-                effort = self.component_effort(component, metadata)
+                effort = self._calc_component_effort(component, metadata)
                 pipeline_efforts[component.name] = effort
                 total_effort += effort
                 
@@ -96,7 +90,7 @@ class CustomPlacer(PlacerInterface):
         return efforts
 
 
-    def component_effort(self, component: Component, metadata: Dict) -> int:
+    def _calc_component_effort(self, component: Component, metadata: Dict) -> int:
         if component.type in self.effort_calculators:
             return self.effort_calculators[component.type](metadata)
         else:
@@ -104,7 +98,7 @@ class CustomPlacer(PlacerInterface):
             return 0
 
 
-    def preprocessing_effort(self, metadata: Dict) -> int:
+    def _calc_preprocessing_effort(self, metadata: Dict) -> int:
         n_samples = metadata["dataset"]["original"]["n_samples"]
         
         # Calculate the number of features based on dataset type
@@ -113,31 +107,29 @@ class CustomPlacer(PlacerInterface):
         elif metadata["dataset"]["type"] == "image":
             shape = metadata["dataset"]["original"]["input_shape"]
             n_features = shape[0] * shape[1] * shape[2]
-        else:
-            n_features = 1
             
         # Simple effort model: samples × features
         effort = n_samples * n_features
         return effort
 
 
-    def training_effort(self, metadata: Dict) -> int:
-        return self.estimate_model_effort(
+    def _calc_training_effort(self, metadata: Dict) -> int:
+        return self._estimate_model_effort(
             metadata, 
             metadata["dataset"]["train_percentage"], 
             training=True
         )
 
 
-    def evaluation_effort(self, metadata: Dict) -> int:
-        return self.estimate_model_effort(
+    def _calc_evaluation_effort(self, metadata: Dict) -> int:
+        return self._estimate_model_effort(
             metadata, 
             metadata["dataset"]["test_percentage"], 
             training=False
         )
     
 
-    def estimate_model_effort(self, metadata: Dict, data_percentage: float, training: bool) -> int:
+    def _estimate_model_effort(self, metadata: Dict, data_percentage: float, training: bool) -> int:
         model = metadata["model"]["type"]
         estimator_params = {}
         
@@ -156,43 +148,27 @@ class CustomPlacer(PlacerInterface):
                 
         return self.estimator.estimate(model, estimator_params, training=training)
 
-
-    def choose_node(self, candidates: List[Dict], pipeline_id: str) -> Dict:
-        # Check if the pipeline already has an assignment(s)
-        nodes = []
-        for node, components in self.assignments.items():
-            pipelines = [c.split("/")[0] for c in components]
-            if pipeline_id in pipelines:
-                nodes.append(node)
-
-        if not nodes and not candidates:
-            return self.fallback_node()
-
-        common_nodes = [c for c in candidates if c["name"] in nodes]
-        candidates = common_nodes if common_nodes else candidates
-
-        overload = [(node, self.assignments_counts[node["name"]]) for node in candidates]
-        overload = sorted(overload, key=lambda x: x[1])
-        return overload[0][0]
     
-    
-    def preprocessing_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+    def _select_preprocessing_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
         dataset = metadata["dataset"]
         size = max(
             self.data_manager.size_in_memory(dataset, "original"),
             self.data_manager.size_in_memory(dataset, "preprocessed")
         )
 
-        # criteria: node that fits the data
-        candidates = self.node_manager.get_nodes(sort_params=["memory"])
-        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
-        node = self.choose_node(candidates, pipeline_id)
-        node_name = node["name"]
-        node_platform = self.node_manager.get_node_platform(node_name)
-        return node_name, node_platform
-
+        # Find nodes that fit the data
+        filters = {"worker_type": ["low", "med", "high-cpu"]}
+        candidates = self.node_manager.get_nodes(filters=filters, sort_params=["memory"])
+        candidates = [node for node in candidates if self._has_sufficient_memory(size, node)]
+        node = self._least_loaded_node(candidates)
+        
+        return (
+            node["name"],
+            self.node_manager.get_node_platform(node["name"])
+        )
+        
     
-    def training_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+    def _select_training_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
         # Dataset
         dataset = metadata["dataset"]
         size = self.data_manager.size_in_memory(dataset, "preprocessed")
@@ -200,35 +176,34 @@ class CustomPlacer(PlacerInterface):
 
         # Model
         model = metadata["model"]["type"]
-        if model in ["logistic_regression", "linear_regression", "decision_tree"]:
-            filters = {"worker_type": ["low", "med"]}
-            sort_params = ["cpu_cores"]
-            descending = False
-        elif model in ["random_forest", "svm"]:
-            filters = {"worker_type": ["med", "high-cpu"]}
-            sort_params = ["n_cpu_flags", "cpu_cores"]
-            descending = False
-        elif model in ["nn", "cnn"]:
-            filters = {
-                "worker_type": ["high-cpu"],
-                "architecture": "amd64"
-            }
-            sort_params = ["cpu_cores"]
-            descending = True
+        heuristics = self.heuristics["training"][model]
+        sorting = heuristics.get("sorting", [])
+        filters = {
+            "worker_type": heuristics["worker_type"],
+            "architecture": heuristics["architecture"]
+        }
+        candidates = self.node_manager.get_nodes(filters=filters, sort_params=sorting)
+
+        if model not in ["nn", "cnn"]:
+            candidates = [node for node in candidates if self._has_sufficient_memory(size, node)]
+            node = self._select_best_node(candidates, pipeline_id)
         else:
-            print(f"Unknown model type: {model}")
-            filters = {"worker_type": ["med"]}
+            scores = {}
+            for node in candidates:
+                has_accelerator = node["accelerator"] != "none"
+                score = self.accelerator_score if has_accelerator else 0  # Prioritize nodes with accelerators
+                score -= self.assignments_counts[node["name"]]            # But balance against current load
+                scores[node["name"]] = score
+            candidates = sorted(candidates, key=lambda x: (scores[x["name"]], self.assignments_counts[x["name"]]))
+            node = candidates[0]
 
-        # Get nodes
-        candidates = self.node_manager.get_nodes(filters=filters, sort_params=sort_params, descending=descending)
-        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
-        node = self.choose_node(candidates, pipeline_id)
-        node_name = node["name"]
-        node_platform = self.node_manager.get_node_platform(node_name)
-        return node_name, node_platform
+        return (
+            node["name"],
+            self.node_manager.get_node_platform(node["name"])
+        )
 
 
-    def evaluation_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+    def _select_evaluation_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
         # Dataset
         dataset = metadata["dataset"]
         size = self.data_manager.size_in_memory(dataset, "preprocessed")
@@ -236,37 +211,57 @@ class CustomPlacer(PlacerInterface):
 
         # Model
         model = metadata["model"]["type"]
-        if model in ["logistic_regression", "linear_regression", "decision_tree"]:
-            filters = {"worker_type": ["low", "med"]}
-        elif model in ["random_forest", "svm"]:
-            filters = {"worker_type": ["low", "med"]}
-        elif model in ["nn", "cnn"]:
-            filters = {"worker_type": ["med", "high-cpu"]}
-        else:
-            print(f"Unknown model type: {model}")
-            filters = {"worker_type": ["med"]}
+        heuristics = self.heuristics["evaluation"][model]
+        sorting = heuristics["sorting"]
+        filters = {
+            "worker_type": heuristics["worker_type"],
+            "architecture": heuristics["architecture"]
+        }
+        candidates = self.node_manager.get_nodes(filters=filters, sort_params=sorting)
+        candidates = [node for node in candidates if self._has_sufficient_memory(size, node)]
+        node = self._select_best_node(candidates, pipeline_id)
 
-        # Get nodes
-        candidates = self.node_manager.get_nodes(filters=filters, sort_params=["cpu_cores", "memory"])
-        candidates = [node for node in candidates if self.size_fits_in_node(size, node)]
-        node = self.choose_node(candidates, pipeline_id)
-        node_name = node["name"]
-        node_platform = self.node_manager.get_node_platform(node_name)
-        return node_name, node_platform
+        return (
+            node["name"],
+            self.node_manager.get_node_platform(node["name"])
+        )
 
-    
-    def size_fits_in_node(self, size: int, node: Dict) -> bool:
+
+    def _has_sufficient_memory(self, size: int, node: Dict) -> bool:
         memory = node["memory"]
         memory_usage = node["memory_usage"]
         memory_free = memory - (memory * memory_usage)
         memory_required = size * 1.5
         return memory_free > memory_required
+
+
+    def _least_loaded_node(self, nodes: List[Dict]) -> Dict:
+        overload = sorted(nodes, key=lambda x: self.assignments_counts[x["name"]])
+        return overload[0]
     
 
-    def fallback_node(self) -> Dict:
+    def _select_best_node(self, candidates: List[Dict], pipeline_id: str) -> Dict:
+        # Check if the pipeline has assignment(s)
+        nodes = []
+        for node, components in self.assignments.items():
+            pipelines = [c.split("/")[0] for c in components]
+            if pipeline_id in pipelines:
+                nodes.append(node)
+
+        if not nodes and not candidates:
+            return self._fallback_node()
+
+        common_nodes = [c for c in candidates if c["name"] in nodes]
+        candidates = common_nodes if common_nodes else candidates
+        return self._least_loaded_node(candidates)
+        
+
+    def _fallback_node(self) -> Dict:
         # Fallback to high-cpu nodes
-        filters = {"worker_type": ["high-cpu"]}
-        nodes = self.node_manager.get_nodes(filters=filters)
-        overload = [(node, self.assignments_counts[node["name"]]) for node in nodes]
-        overload = sorted(overload, key=lambda x: x[1])
-        return overload[0][0]
+        nodes = self.node_manager.get_nodes(filters={"worker_type": ["high-cpu"]})
+        return self._least_loaded_node(nodes)
+
+
+    def _add_assignment(self, node: str, pipeline_id: str, component: str):
+        self.assignments[node].add(f"{pipeline_id}/{component}")
+        self.assignments_counts[node] += 1
