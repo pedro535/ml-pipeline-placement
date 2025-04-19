@@ -8,8 +8,6 @@ class CNN(EstimatorInterface):
         n_samples = params["n_samples"]
         n_epochs = params["n_epochs"]
         n_parameters = params["n_parameters"]
-
-        # TODO: Enhance this with actual CNN complexity estimation
         complexity = n_samples * n_parameters * n_epochs
         return complexity
     
@@ -18,7 +16,5 @@ class CNN(EstimatorInterface):
     def estimate_pred(params):
         n_samples = params["n_samples"]
         n_parameters = params["n_parameters"]
-
-        # TODO: Enhance this with actual CNN complexity estimation
         complexity = n_samples * n_parameters
         return complexity

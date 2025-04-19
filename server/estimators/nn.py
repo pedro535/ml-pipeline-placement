@@ -8,8 +8,6 @@ class NN(EstimatorInterface):
         n_samples = params["n_samples"]
         n_epochs = params["n_epochs"]
         n_parameters = params["n_parameters"]
-
-        # Assuming a simple feedforward neural network
         complexity = n_samples * n_parameters * n_epochs
         return complexity
     
@@ -18,7 +16,5 @@ class NN(EstimatorInterface):
     def estimate_pred(params):
         n_samples = params["n_samples"]
         n_parameters = params["n_parameters"]
-
-        # Assuming a simple feedforward neural network
         complexity = n_samples * n_parameters
         return complexity

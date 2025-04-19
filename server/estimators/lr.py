@@ -7,10 +7,7 @@ class LogisticRegression(EstimatorInterface):
     def estimate_train(params):
         n_samples = params["n_samples"]
         n_features = params["n_features"]
-        n_classes = params["n_classes"]
         n_iter = params.get('n_iter', 100)
-
-        # complexity = n_samples * n_features * n_iter * n_classes
         complexity = n_samples * n_features * n_iter
         return complexity
     
@@ -19,8 +16,5 @@ class LogisticRegression(EstimatorInterface):
     def estimate_pred(params):
         n_samples = params["n_samples"]
         n_features = params["n_features"]
-        n_classes = params["n_classes"]
-
-        # complexity = n_samples * n_features * n_classes
-        complexity = n_samples * n_features * n_classes
+        complexity = n_samples * n_features
         return complexity

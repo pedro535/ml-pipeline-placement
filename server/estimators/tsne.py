@@ -7,7 +7,6 @@ class TSNE(EstimatorInterface):
     def estimate_train(params):
         n_samples = params["n_samples"]
         n_features = params["n_features"]
-
         complexity = n_samples**2 * n_features
         return complexity, None
     
