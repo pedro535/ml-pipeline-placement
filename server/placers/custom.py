@@ -46,7 +46,7 @@ class CustomPlacer(PlacerInterface):
         efforts = self._calc_pipeline_efforts(pipelines)
         run_order = sorted(
             list(efforts.keys()),
-            lambda x: efforts[x]["total"]
+            key=lambda x: efforts[x]["total"]
         )
 
         # Placement: pipeline-aware heuristic
@@ -191,10 +191,14 @@ class CustomPlacer(PlacerInterface):
             scores = {}
             for node in candidates:
                 has_accelerator = node["accelerator"] != "none"
-                score = self.accelerator_score if has_accelerator else 0  # Prioritize nodes with accelerators
-                score -= self.assignments_counts[node["name"]]            # But balance against current load
+                score = self.accelerator_score if has_accelerator else 0    # Prioritize nodes with accelerators
+                score -= self.assignments_counts[node["name"]]              # But balance against current load
                 scores[node["name"]] = score
-            candidates = sorted(candidates, key=lambda x: (scores[x["name"]], self.assignments_counts[x["name"]]))
+            candidates = sorted(
+                candidates,
+                key=lambda x: (scores[x["name"]], -self.assignments_counts[x["name"]]),
+                reverse=True
+            )
             node = candidates[0]
 
         return (
