@@ -183,7 +183,7 @@ class PipelineManager:
                 if run["display_name"].startswith(name):
                     pipeline.update(kfp_id=run["run_id"])
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching runs from KFP API")
+            print("Error fetching runs from KFP API")
 
     
     def print_running_pipelines(self):

@@ -182,7 +182,7 @@ class NodeManager:
         :param node_names: List of node names to check
         :return: True if all nodes are available, False otherwise
         """
-        return all(self.availability.get(node, False) for node in node_names)
+        return all(self.availability[node] for node in node_names)
 
 
     def reserve_nodes(self, node_names: List[str]):
