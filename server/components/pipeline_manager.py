@@ -1,7 +1,6 @@
 from queue import Queue
 from typing import List, Dict, Tuple
 import subprocess
-from kfp import Client
 import requests
 import json
 
@@ -23,7 +22,6 @@ class PipelineManager:
         self.decision_unit = decision_unit
         self.node_manager = node_manager
         self.kfp_url = KFP_URL
-        self.kfp_client = Client(host=self.kfp_url)
         self.pipelines: Dict[str, Pipeline] = {}
         self.submission_queue = Queue()
         self.waiting_list = []
