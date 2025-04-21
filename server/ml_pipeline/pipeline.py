@@ -54,9 +54,11 @@ class Pipeline:
     
     def update_kfp(self, run_details: Dict):
         self.state = run_details["state"]
-        self.scheduled_at = run_details["scheduled_at"]
-        self.finished_at = run_details["finished_at"] if run_details["finished_at"] > EPOCH_DATE else None
-        duration = (run_details["finished_at"] - run_details["scheduled_at"]).total_seconds()
+        scheduled_at = datetime.fromisoformat(run_details["scheduled_at"])
+        finished_at = datetime.fromisoformat(run_details["finished_at"])
+        self.scheduled_at = scheduled_at
+        self.finished_at = finished_at if finished_at > EPOCH_DATE else None
+        duration = (finished_at - scheduled_at).total_seconds()
         self.duration = round(duration, 2) if duration >= 0 else None
         self.last_update = datetime.now(tz=tz.tzutc())
 
@@ -88,8 +90,10 @@ class Pipeline:
             task_name = task["display_name"]
             if task_name in self.components:
                 component = self.components[task_name]
-                component.start_time = task["start_time"]
-                component.end_time = task["end_time"] if task["end_time"] > EPOCH_DATE else None
-                duration = (task["end_time"] - task["start_time"]).total_seconds()
+                start_time = datetime.fromisoformat(task["start_time"])
+                end_time = datetime.fromisoformat(task["end_time"])
+                component.start_time = start_time
+                component.end_time = end_time if end_time > EPOCH_DATE else None
+                duration = (end_time - start_time).total_seconds()
                 component.duration = round(duration, 2) if duration >= 0 else None
                 component.state = task["state"]

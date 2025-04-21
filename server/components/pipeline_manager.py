@@ -75,6 +75,7 @@ class PipelineManager:
 
     def update_pipelines(self):
         # Update running pipelines
+        kfp_runs = self._get_kfp_runs()
         for pipeline_id in self.running_pipelines:
             pipeline = self.pipelines[pipeline_id]
             if pipeline.kfp_id is None:
@@ -83,9 +84,10 @@ class PipelineManager:
                 print("Kfp id still unavailable for pipeline: ", pipeline_id)
                 continue
             
-            run_details = self.kfp_client.get_run(pipeline.kfp_id).to_dict()
-            self._update_components(pipeline_id, run_details)
-            pipeline.update_kfp(run_details)
+            run_details = kfp_runs.get(pipeline.kfp_id)
+            if run_details is not None:
+                self._update_components(pipeline_id, run_details)
+                pipeline.update_kfp(run_details)
         
         # Terminate completed pipelines
         self._terminate_pipelines()
@@ -122,13 +124,11 @@ class PipelineManager:
     def _terminate_pipelines(self):
         for pipeline_id in self.running_pipelines.copy():
             pipeline = self.pipelines[pipeline_id]
-            if pipeline.state not in ["SUCCEEDED", "FAILED"]:
-                continue
-            
-            self.running_pipelines.remove(pipeline_id)
-            for c in pipeline.get_components():
-                self.decision_unit.rm_assignment(c.node, pipeline_id, c.name)
-                self.node_manager.release_nodes([c.node])
+            if pipeline.state in ["SUCCEEDED", "FAILED"]:
+                self.running_pipelines.remove(pipeline_id)
+                for c in pipeline.get_components():
+                    self.decision_unit.rm_assignment(c.node, pipeline_id, c.name)
+                    self.node_manager.release_nodes([c.node])
 
 
     def _build_pipeline(self, pipeline_id: str, mapping: Dict[str, Tuple[str, str]]):
@@ -186,6 +186,18 @@ class PipelineManager:
             print("Error fetching runs from KFP API")
 
     
+    def _get_kfp_runs(self) -> Dict[str, Dict]:
+        url = f"{self.kfp_url}{KFP_API_ENDPOINT}/runs"
+        try:
+            response = requests.get(url, timeout=6).json()
+            runs = response.get("runs", [])
+            runs_dict = {r["run_id"]: r for r in runs}
+            return runs_dict
+        except requests.exceptions.RequestException as e:
+            print("Error fetching runs from KFP API")
+            return {}
+
+
     def print_running_pipelines(self):
         for pipeline_id in self.running_pipelines:
             pipeline = self.pipelines[pipeline_id]
