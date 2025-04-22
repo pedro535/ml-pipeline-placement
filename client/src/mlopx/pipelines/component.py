@@ -2,7 +2,7 @@ import ast
 import inspect
 from typing import Callable, Dict
 
-from mlopx import ComponentConverter
+from mlopx.pipelines import ComponentConverter
 
 
 class Component:

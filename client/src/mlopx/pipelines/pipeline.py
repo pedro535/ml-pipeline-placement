@@ -7,8 +7,8 @@ import black
 import json
 from typing import List, Tuple
 
-from mlopx import Component, PipelineBuilder
-from mlopx.consts import ARGPARSE_CODE, PIPELINE_BUILD_CALL
+from mlopx.pipelines import Component, PipelineBuilder
+from mlopx.pipelines.consts import ARGPARSE_CODE, PIPELINE_BUILD_CALL
 
 
 class Pipeline:
