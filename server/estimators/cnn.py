@@ -11,6 +11,9 @@ class Cnn(EstimatorInterface):
 
     @staticmethod
     def _calculate_macs(layers: List[Dict[str, Any]]) -> int:
+        """
+        Calculate the number of Multiply-Accumulate operations (MACs) for a CNN model.
+        """
         macs = 0
         for layer in layers:
             input_shape = layer["input_shape"]
@@ -37,6 +40,9 @@ class Cnn(EstimatorInterface):
 
     @staticmethod
     def estimate_train(params: Dict[str, Any]) -> int:
+        """
+        Estimate the number of FLOPs for training a CNN model.
+        """
         n_samples = params["n_samples"]
         n_epochs = params["n_epochs"]
         layers = params["layers"]
@@ -49,6 +55,9 @@ class Cnn(EstimatorInterface):
 
     @staticmethod
     def estimate_pred(params: Dict[str, Any]) -> int:
+        """
+        Estimate the number of FLOPs for inference with a CNN model.
+        """
         n_samples = params["n_samples"]
         layers = params["layers"]
 

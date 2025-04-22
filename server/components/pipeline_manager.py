@@ -28,7 +28,10 @@ class PipelineManager:
         self.running_pipelines = []
 
 
-    def add_pipeline(self, pipeline_id: str, name: str, components: List[Tuple[str, str]]):
+    def add_pipeline(self, pipeline_id: str, name: str, components: List[Tuple[str, str]]) -> None:
+        """
+        Register a new pipeline with its components.
+        """
         self.submission_queue.put(pipeline_id)
         pipeline = Pipeline(pipeline_id, name)
         
@@ -39,7 +42,22 @@ class PipelineManager:
         self.pipelines[pipeline_id] = pipeline
 
 
-    def process_pipelines(self):
+    def dump_pipelines(self) -> None:
+        """
+        Dump the pipelines to a JSON file.
+        """
+        pipelines_as_dict = []
+        for pipeline in self.pipelines.values():
+            pipelines_as_dict.append(pipeline.dict_repr())
+
+        with open(pipelines_dir / "pipelines.json", "w") as f:
+            json.dump(pipelines_as_dict, f, indent=4, default=str)
+
+
+    def process_pipelines(self) -> None:
+        """
+        Process the pipelines in the submission queue.
+        """
         # DEBUG
         print("Assignments")
         print(json.dumps(self.decision_unit.assignments, indent=4, default=str))
@@ -71,7 +89,10 @@ class PipelineManager:
             self.waiting_list.append(pipeline_id)
 
 
-    def update_pipelines(self):
+    def update_pipelines(self) -> None:
+        """
+        Update the status of running pipelines and check waiting pipelines.
+        """
         # Update running pipelines
         kfp_runs = self._get_kfp_runs()
         for pipeline_id in self.running_pipelines:
@@ -87,7 +108,6 @@ class PipelineManager:
                 self._update_components(pipeline_id, run_details)
                 pipeline.update_kfp(run_details)
         
-        # Terminate completed pipelines
         self._terminate_pipelines()
 
         # Check for new pipeline to be executed
@@ -107,7 +127,10 @@ class PipelineManager:
         self.print_running_pipelines()
 
 
-    def _update_components(self, pipeline_id: str, run_details: Dict):
+    def _update_components(self, pipeline_id: str, run_details: Dict) -> None:
+        """
+        Update pipeline components with details from KFP API.
+        """
         task_details = run_details["run_details"]["task_details"]
         pipeline = self.pipelines[pipeline_id]
         pipeline.update_components_kfp(task_details)
@@ -119,7 +142,10 @@ class PipelineManager:
                     self.node_manager.release_nodes([c.node], pipeline_id)
 
 
-    def _terminate_pipelines(self):
+    def _terminate_pipelines(self) -> None:
+        """
+        Terminate pipelines that are completed.
+        """
         for pipeline_id in self.running_pipelines.copy():
             pipeline = self.pipelines[pipeline_id]
             if pipeline.state in ["SUCCEEDED", "FAILED"]:
@@ -129,7 +155,10 @@ class PipelineManager:
                     self.node_manager.release_nodes([c.node], pipeline_id)
 
 
-    def _build_pipeline(self, pipeline_id: str, mapping: Dict[str, Tuple[str, str]]):
+    def _build_pipeline(self, pipeline_id: str, mapping: Dict[str, Tuple[str, str]]) -> None:
+        """
+        Build the pipeline using the provided mapping.
+        """
         pipeline = self.pipelines[pipeline_id]
         path = pipelines_dir / pipeline_id / PIPELINE_FILENAME
         args = ["python3", path, "-u", self.kfp_url, "-m"]
@@ -150,7 +179,10 @@ class PipelineManager:
             pipeline.update(state="FAILED")
 
 
-    def _run_pipeline(self, pipeline_id: str):
+    def _run_pipeline(self, pipeline_id: str) -> None:
+        """
+        Trigger the execution of the pipeline.
+        """
         pipeline = self.pipelines[pipeline_id]
 
         try:
@@ -171,7 +203,10 @@ class PipelineManager:
             pipeline.update(state="FAILED")
 
 
-    def _update_kfp_id(self, pipeline: Pipeline):
+    def _update_kfp_id(self, pipeline: Pipeline) -> None:
+        """
+        Extract the KFP ID of the pipeline from the KFP API.
+        """
         url = f"{self.kfp_url}{KFP_API_ENDPOINT}/runs"
         name = pipeline.name.lower().replace("_", "-")
         try:
@@ -180,32 +215,26 @@ class PipelineManager:
             for run in runs:
                 if run["display_name"].startswith(name):
                     pipeline.update(kfp_id=run["run_id"])
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException:
             print("Error fetching runs from KFP API")
 
     
     def _get_kfp_runs(self) -> Dict[str, Dict]:
+        """
+        Fetch the list of runs from the KFP API.
+        """
         url = f"{self.kfp_url}{KFP_API_ENDPOINT}/runs"
         try:
             response = requests.get(url, timeout=6).json()
             runs = response.get("runs", [])
             runs_dict = {r["run_id"]: r for r in runs}
             return runs_dict
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException:
             print("Error fetching runs from KFP API")
             return {}
 
 
-    def print_running_pipelines(self):
+    def print_running_pipelines(self) -> None:
         for pipeline_id in self.running_pipelines:
             pipeline = self.pipelines[pipeline_id]
             print(pipeline)
-
-    
-    def dump_pipelines(self):
-        pipelines_as_dict = []
-        for pipeline in self.pipelines.values():
-            pipelines_as_dict.append(pipeline.dict_repr())
-
-        with open(pipelines_dir / "pipelines.json", "w") as f:
-            json.dump(pipelines_as_dict, f, indent=4, default=str)

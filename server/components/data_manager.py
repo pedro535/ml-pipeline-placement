@@ -9,6 +9,7 @@ from server.settings import DATASETS_PATH
 
 
 class DataManager:
+
     def __init__(self):
         self.datasets_dir = Path(DATASETS_PATH)
         self.datasets: Dict[str, Dict] = {}

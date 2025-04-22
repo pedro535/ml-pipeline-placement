@@ -18,18 +18,15 @@ class FifoRandomPlacer(PlacerInterface):
         self.assignments_counts = None   # attr from DecisionUnit
 
 
-    def add_assignment(self, node: str, pipeline_id: str, component: str):
-        self.assignments[node].add(f"{pipeline_id}/{component}")
-        self.assignments_counts[node] += 1
-
-
     def place_pipelines(
         self,
         pipelines: List[Pipeline],
         assignments: Dict[str, Set[str]],
         assignments_counts: Dict[str, int]
     ) -> List[Dict]:
-        
+        """
+        Place pipelines on nodes following a FIFO random strategy.
+        """
         self.assignments = assignments
         self.assignments_counts = assignments_counts
 
@@ -39,9 +36,9 @@ class FifoRandomPlacer(PlacerInterface):
             metadata = pipeline.get_metadata()
             mapping = {}
             for component in pipeline.get_components():
-                node, platform = self.get_random_node(component, metadata)
+                node, platform = self._get_random_node(component, metadata)
                 mapping[component.name] = (node, platform)
-                self.add_assignment(node, pipeline.id, component.name)
+                self._add_assignment(node, pipeline.id, component.name)
 
             placements.append({
                 "pipeline_id": pipeline.id,
@@ -51,7 +48,10 @@ class FifoRandomPlacer(PlacerInterface):
         return placements
 
 
-    def get_random_node(self, component: Component, metadata: Dict) -> Tuple:
+    def _get_random_node(self, component: Component, metadata: Dict) -> Tuple:
+        """
+        Get a random node that has sufficient memory for the component.
+        """
         dataset = metadata["dataset"]
         size = max(
             self.data_manager.size_in_memory(dataset, "original"),
@@ -60,7 +60,7 @@ class FifoRandomPlacer(PlacerInterface):
 
         nodes = self.node_manager.get_nodes()
         random_node = random.choice(nodes)
-        while not self.size_fits_in_node(size, random_node):
+        while not self._has_sufficient_memory(size, random_node):
             random_node = random.choice(nodes)
 
         node_name = random_node["name"]
@@ -68,9 +68,20 @@ class FifoRandomPlacer(PlacerInterface):
         return node_name, node_platform
 
 
-    def size_fits_in_node(self, size: int, node: Dict) -> bool:
+    def _has_sufficient_memory(self, size: int, node: Dict) -> bool:
+        """
+        Check if the node has sufficient memory for the data plus overhead.
+        """
         memory = node["memory"]
         memory_usage = node["memory_usage"]
         memory_free = memory - (memory * memory_usage)
         memory_required = size * 1.5
         return memory_free > memory_required
+    
+
+    def _add_assignment(self, node: str, pipeline_id: str, component: str):
+        """
+        Add an assignment to the node.
+        """
+        self.assignments[node].add(f"{pipeline_id}/{component}")
+        self.assignments_counts[node] += 1

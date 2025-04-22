@@ -11,6 +11,9 @@ class Nn(EstimatorInterface):
 
     @staticmethod
     def _calculate_macs(layers: List[Dict[str, Any]]) -> int:
+        """
+        Calculate the number of Multiply-Accumulate operations (MACs) for a given set of layers.
+        """
         macs = 0
         for layer in layers:
             input_shape = layer["input_shape"]
@@ -26,6 +29,9 @@ class Nn(EstimatorInterface):
 
     @staticmethod
     def estimate_train(params: Dict[str, Any]) -> int:
+        """
+        Estimate the number of FLOPs for training a neural network.
+        """
         n_samples = params["n_samples"]
         n_epochs = params["n_epochs"]
         layers = params["layers"]
@@ -38,6 +44,9 @@ class Nn(EstimatorInterface):
 
     @staticmethod
     def estimate_pred(params: Dict[str, Any]) -> int:
+        """
+        Estimate the number of FLOPs for inference of a neural network.
+        """
         n_samples = params["n_samples"]
         layers = params["layers"]
 

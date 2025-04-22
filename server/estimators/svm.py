@@ -1,10 +1,15 @@
+from typing import Dict, Any
+
 from server.estimators import EstimatorInterface
 
 
 class Svm(EstimatorInterface):
 
     @staticmethod
-    def estimate_train(params):
+    def estimate_train(params: Dict[str, Any]) -> int:
+        """
+        Estimate the training complexity of a Support Vector Machine model.
+        """
         n_samples = params["n_samples"]
         n_features = params["n_features"]
         kernel = params.get('kernel', 'linear')
@@ -19,7 +24,10 @@ class Svm(EstimatorInterface):
 
 
     @staticmethod
-    def estimate_pred(params):
+    def estimate_pred(params: Dict[str, Any]) -> int:
+        """
+        Estimate the prediction complexity of a Support Vector Machine model.
+        """
         n_samples = params["n_samples"]
         n_features = params["n_features"]
         kernel = params.get('kernel', 'linear')

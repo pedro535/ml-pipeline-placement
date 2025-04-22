@@ -38,7 +38,9 @@ class CustomPlacer(PlacerInterface):
         assignments: Dict[str, Set[str]],
         assignments_counts: Dict[str, int]
     ) -> List[Dict]:
-        
+        """
+        Place pipelines on nodes based on custom heuristics.
+        """
         self.assignments = assignments
         self.assignments_counts = assignments_counts
 
@@ -74,6 +76,9 @@ class CustomPlacer(PlacerInterface):
 
 
     def _calc_pipeline_efforts(self, pipelines: List[Pipeline]) -> Dict[str, Dict]:
+        """
+        Calculate the effort for each pipeline and its components.
+        """
         efforts = {}
         for pipeline in pipelines:
             metadata = pipeline.get_metadata()
@@ -91,6 +96,9 @@ class CustomPlacer(PlacerInterface):
 
 
     def _calc_component_effort(self, component: Component, metadata: Dict) -> int:
+        """
+        Calculate the effort for a specific component based on its type.
+        """
         if component.type in self.effort_calculators:
             return self.effort_calculators[component.type](metadata)
         else:
@@ -99,6 +107,9 @@ class CustomPlacer(PlacerInterface):
 
 
     def _calc_preprocessing_effort(self, metadata: Dict) -> int:
+        """
+        Calculate the effort for a preprocessing component.
+        """
         n_samples = metadata["dataset"]["original"]["n_samples"]
         
         # Calculate the number of features based on dataset type
@@ -114,6 +125,9 @@ class CustomPlacer(PlacerInterface):
 
 
     def _calc_training_effort(self, metadata: Dict) -> int:
+        """
+        Calculate the effort for a training component.
+        """
         return self._estimate_model_effort(
             metadata, 
             metadata["dataset"]["train_percentage"], 
@@ -122,6 +136,9 @@ class CustomPlacer(PlacerInterface):
 
 
     def _calc_evaluation_effort(self, metadata: Dict) -> int:
+        """
+        Calculate the effort for an evaluation component.
+        """
         return self._estimate_model_effort(
             metadata, 
             metadata["dataset"]["test_percentage"], 
@@ -130,6 +147,9 @@ class CustomPlacer(PlacerInterface):
     
 
     def _estimate_model_effort(self, metadata: Dict, data_percentage: float, training: bool) -> int:
+        """
+        Estimate the effort for a model based on its type and parameters.
+        """
         model = metadata["model"]["type"]
         estimator_params = {}
         
@@ -150,6 +170,9 @@ class CustomPlacer(PlacerInterface):
 
     
     def _select_preprocessing_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+        """
+        Select a node for preprocessing.
+        """
         dataset = metadata["dataset"]
         size = max(
             self.data_manager.size_in_memory(dataset, "original"),
@@ -169,6 +192,9 @@ class CustomPlacer(PlacerInterface):
         
     
     def _select_training_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+        """
+        Select a node for training.
+        """
         # Dataset
         dataset = metadata["dataset"]
         size = self.data_manager.size_in_memory(dataset, "preprocessed")
@@ -208,6 +234,9 @@ class CustomPlacer(PlacerInterface):
 
 
     def _select_evaluation_node(self, pipeline_id: str, metadata: Dict) -> Tuple[str, str]:
+        """
+        Select a node for evaluation.
+        """
         # Dataset
         dataset = metadata["dataset"]
         size = self.data_manager.size_in_memory(dataset, "preprocessed")
@@ -232,6 +261,9 @@ class CustomPlacer(PlacerInterface):
 
 
     def _has_sufficient_memory(self, size: int, node: Dict) -> bool:
+        """
+        Check if the node has sufficient memory for the data plus overhead.
+        """
         memory = node["memory"]
         memory_usage = node["memory_usage"]
         memory_free = memory - (memory * memory_usage)
@@ -240,11 +272,17 @@ class CustomPlacer(PlacerInterface):
 
 
     def _least_loaded_node(self, nodes: List[Dict]) -> Dict:
+        """
+        Select the least loaded node based on the number of assignments.
+        """
         overload = sorted(nodes, key=lambda x: self.assignments_counts[x["name"]])
         return overload[0]
     
 
     def _select_best_node(self, candidates: List[Dict], pipeline_id: str) -> Dict:
+        """
+        Select the best node from the candidates based on the pipeline ID.
+        """
         # Check if the pipeline has assignment(s)
         nodes = []
         for node, components in self.assignments.items():
@@ -261,11 +299,16 @@ class CustomPlacer(PlacerInterface):
         
 
     def _fallback_node(self) -> Dict:
-        # Fallback to high-cpu nodes
+        """
+        Fallback to a high-cpu node if no suitable candidates are found.
+        """
         nodes = self.node_manager.get_nodes(filters={"worker_type": ["high-cpu"]})
         return self._least_loaded_node(nodes)
 
 
     def _add_assignment(self, node: str, pipeline_id: str, component: str):
+        """
+        Add an assignment to the node.
+        """
         self.assignments[node].add(f"{pipeline_id}/{component}")
         self.assignments_counts[node] += 1

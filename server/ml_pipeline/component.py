@@ -14,4 +14,7 @@ class Component:
 
 
     def dict_repr(self):
+        """
+        Returns a dictionary representation of the component.
+        """
         return self.__dict__

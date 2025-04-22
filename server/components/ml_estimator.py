@@ -1,3 +1,5 @@
+from typing import Dict
+
 from server.estimators import (
     LinearRegression,
     LogisticRegression,
@@ -26,7 +28,10 @@ class MLEstimator:
         }
 
 
-    def estimate(self, algorithm, params, training=True):
+    def estimate(self, algorithm: str, params: Dict, training: bool = True) -> int:
+        """
+        Estimate the complexity of a given ML algorithm.
+        """
         if algorithm not in self.estimators:
             raise ValueError(f"Unknown ML algorithm: {algorithm}")
         

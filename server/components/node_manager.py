@@ -17,7 +17,7 @@ class NodeManager:
         self._initialize_occupation()
 
 
-    def _load_kube_config(self):
+    def _load_kube_config(self) -> None:
         """
         Load Kubernetes configuration depending on DEBUG flag.
         """
@@ -27,7 +27,7 @@ class NodeManager:
             config.load_incluster_config()
 
 
-    def _fetch_nodes(self):
+    def _fetch_nodes(self) -> None:
         """
         Fetch and update metadata and metrics for all agent worker nodes.
         """
@@ -60,7 +60,7 @@ class NodeManager:
             }
 
 
-    def _initialize_occupation(self):
+    def _initialize_occupation(self) -> None:
         """
         Mark all known nodes as available initially.
         """
@@ -128,7 +128,7 @@ class NodeManager:
         return self._get_prometheus_metric(query)
 
 
-    def update_nodes(self):
+    def update_nodes(self) -> None:
         """
         Update nodes metadata and metrics.
         """
@@ -149,12 +149,7 @@ class NodeManager:
         descending: bool = False
     ) -> List[Dict]:
         """
-        Get node details, optionally filtered by worker type and sorted.
-
-        :param filters: Additional filters to apply to nodes
-        :param sort_params: Fields to sort nodes by
-        :param descending: Whether to sort in descending order
-        :return: List of node metadata dictionaries
+        Get nodes and their details, optionally filtered and sorted.
         """
         nodes = list(self.nodes.values())
 
@@ -178,30 +173,21 @@ class NodeManager:
     def nodes_available(self, node_names: List[str]) -> bool:
         """
         Check if all nodes in the list are available.
-
-        :param node_names: List of node names to check
-        :return: True if all nodes are available, False otherwise
         """
         return all([self.occupation[node] is None for node in node_names])
 
 
-    def reserve_nodes(self, node_names: List[str], pipeline_id: str):
+    def reserve_nodes(self, node_names: List[str], pipeline_id: str) -> None:
         """
         Mark nodes as reserved (unavailable).
-
-        :param node_names: List of node names to reserve
-        :param pipeline_id: ID of the pipeline reserving the nodes
         """
         for node in node_names:
             self.occupation[node] = pipeline_id
 
 
-    def release_nodes(self, node_names: List[str], pipeline_id: str):
+    def release_nodes(self, node_names: List[str], pipeline_id: str) -> None:
         """
         Mark nodes as released (available again).
-
-        :param node_names: List of node names to release
-        :param pipeline_id: ID of the pipeline releasing the nodes
         """
         for node in node_names:
             if self.occupation[node] == pipeline_id:
@@ -211,9 +197,6 @@ class NodeManager:
     def get_node_platform(self, node: str) -> str:
         """
         Get the platform of a node to be used for docker images tagging.
-
-        :param node_name: Name of the node
-        :return: Platform of the node
         """
         accelerator = self.nodes[node]["accelerator"]
         if accelerator != "none":

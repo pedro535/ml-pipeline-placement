@@ -8,7 +8,6 @@ from server.placers import (
     CustomPlacer,
     FifoRandomPlacer,
     FifoRoundRobinPlacer,
-    FifoGreedyPlacer,
     RandomRandomPlacer
 )
 
@@ -17,7 +16,6 @@ placers = {
     "custom": CustomPlacer,
     "fifo_random": FifoRandomPlacer,
     "fifo_round_robin": FifoRoundRobinPlacer,
-    "fifo_greedy": FifoGreedyPlacer,
     "random_random": RandomRandomPlacer,
 }
 
@@ -33,7 +31,10 @@ class DecisionUnit:
         self.init_assignments()
 
 
-    def init_assignments(self):
+    def init_assignments(self) -> None:
+        """
+        Initialize the assignments and counts for each node.
+        """
         self.node_manager.update_nodes()
         for node in self.node_manager.get_nodes():
             name = node["name"]
@@ -41,7 +42,10 @@ class DecisionUnit:
             self.assignments_counts[name] = 0
 
     
-    def rm_assignment(self, node: str, pipeline_id: str, component: str):
+    def rm_assignment(self, node: str, pipeline_id: str, component: str) -> None:
+        """
+        Remove the assignment of a component to a node.
+        """
         component_id = f"{pipeline_id}/{component}"
         if component_id in self.assignments[node]:
             self.assignments[node].remove(component_id)
@@ -49,6 +53,9 @@ class DecisionUnit:
 
 
     def is_node_needed(self, node: str, pipeline_id: str) -> bool:
+        """
+        Check if a node is still needed for a pipeline.
+        """
         for pipeline in self.assignments[node]:
             if pipeline.split("/")[0] == pipeline_id:
                 return True
@@ -56,6 +63,9 @@ class DecisionUnit:
 
 
     def get_placements(self, pipelines: List[Pipeline]) -> List[Dict]:
+        """
+        Get the placements for each pipeline using a selected placer.
+        """
         placements = self.placer.place_pipelines(
             pipelines, self.assignments, self.assignments_counts
         )

@@ -1,10 +1,15 @@
+from typing import Dict, Any
+
 from server.estimators import EstimatorInterface
 
 
 class LinearRegression(EstimatorInterface):
 
     @staticmethod
-    def estimate_train(params):
+    def estimate_train(params: Dict[str, Any]) -> int:
+        """
+        Estimate the training complexity of linear regression.
+        """
         n_samples = params["n_samples"]
         n_features = params["n_features"]
         solver = params.get("solver", "ols")
@@ -23,7 +28,10 @@ class LinearRegression(EstimatorInterface):
     
 
     @staticmethod
-    def estimate_pred(params):
+    def estimate_pred(params: Dict[str, Any]) -> int:
+        """
+        Estimate the prediction complexity of linear regression.
+        """
         n_samples = params["n_samples"]
         n_features = params["n_features"]
 
