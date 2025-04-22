@@ -33,9 +33,40 @@
     "model": {
         "type" : "nn",
         "params" : {
-            "n_parameters": 24226,
             "n_epochs": 10,
-            "batch_size": 32
+            "batch_size": 32,
+            "layers": [
+                {
+                    "type": "Dense",
+                    "input_shape": [42],
+                    "output_shape": [128],
+                    "params": 5504
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [128],
+                    "output_shape": [96],
+                    "params": 12384
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [96],
+                    "output_shape": [64],
+                    "params": 6208
+                },
+                {
+                    "type": "Dropout",
+                    "input_shape": [64],
+                    "output_shape": [64],
+                    "params": 0
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [64],
+                    "output_shape": [2],
+                    "params": 130
+                }
+            ]
         }
     }
 }

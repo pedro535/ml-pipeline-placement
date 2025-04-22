@@ -135,6 +135,8 @@ The complexity estimator assumes the model is using OvR for multiclass classific
 
 ### NN
 
+The `layers` are the output of `mlopx.utils.ModelDetails.tf_dnn_layers`.
+
 ```json
 {
     "components_type": {...},
@@ -142,15 +144,17 @@ The complexity estimator assumes the model is using OvR for multiclass classific
     "model" : {
         "type" : "nn",
         "params" : {
-            "n_parameters" : 123,
             "n_epochs" : 123,
-            "batch_size" : 123
+            "batch_size" : 123,
+            "layers": [...]
         }
     }
 }
 ```
 
 ### CNN
+
+The `layers` are the output of `mlopx.utils.ModelDetails.tf_dnn_layers`.
 
 ```json
 {
@@ -159,9 +163,9 @@ The complexity estimator assumes the model is using OvR for multiclass classific
     "model" : {
         "type" : "cnn",
         "params" : {
-            "n_parameters" : 123,
             "n_epochs" : 123,
-            "batch_size" : 123
+            "batch_size" : 123,
+            "layers": [...]
         }
     }
 }

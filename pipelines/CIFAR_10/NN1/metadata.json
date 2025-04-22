@@ -25,9 +25,73 @@
     "model": {
         "type" : "cnn",
         "params" : {
-            "n_parameters": 356810,
             "n_epochs": 10,
-            "batch_size": 64
+            "batch_size": 64,
+            "layers": [
+                {
+                    "type": "Conv2D",
+                    "input_shape": [32, 32, 3],
+                    "output_shape": [30, 30, 32],
+                    "params": 896,
+                    "kernel_size": [3, 3],
+                    "strides": [1, 1]
+                },
+                {
+                    "type": "MaxPooling2D",
+                    "input_shape": [30, 30, 32],
+                    "output_shape": [15, 15, 32],
+                    "params": 0,
+                    "pool_size": [2, 2]
+                },
+                {
+                    "type": "Conv2D",
+                    "input_shape": [15, 15, 32],
+                    "output_shape": [13, 13, 64],
+                    "params": 18496,
+                    "kernel_size": [3, 3],
+                    "strides": [1, 1]
+                },
+                {
+                    "type": "MaxPooling2D",
+                    "input_shape": [13, 13, 64],
+                    "output_shape": [6, 6, 64],
+                    "params": 0,
+                    "pool_size": [2, 2]
+                },
+                {
+                    "type": "Conv2D",
+                    "input_shape": [6, 6, 64],
+                    "output_shape": [4, 4, 128],
+                    "params": 73856,
+                    "kernel_size": [3, 3],
+                    "strides": [1, 1]
+                },
+                {
+                    "type": "MaxPooling2D",
+                    "input_shape": [4, 4, 128],
+                    "output_shape": [2, 2, 128],
+                    "params": 0,
+                    "pool_size": [2, 2]
+                },
+                {
+                    "type": "Flatten",
+                    "input_shape": [2, 2, 128],
+                    "output_shape": [512],
+                    "params": 0
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [512],
+                    "output_shape": [128],
+                    "params": 65664
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [128],
+                    "output_shape": [10],
+                    "params": 1290
+                }
+            ]
         }
     }
 }
