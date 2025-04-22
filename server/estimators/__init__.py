@@ -3,8 +3,8 @@ from .linr import LinearRegression
 from .lr import LogisticRegression
 from .dt import DecisionTree
 from .rf import RandomForest
-from .svm import SVM
-from .nn import NN
-from .cnn import CNN
-from .pca import PCA
-from .tsne import TSNE
+from .svm import Svm
+from .nn import Nn
+from .cnn import Cnn
+from .pca import Pca
+from .tsne import Tsne

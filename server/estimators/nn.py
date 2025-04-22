@@ -7,7 +7,7 @@ from server.estimators import EstimatorInterface
 # - https://openai.com/index/ai-and-compute/
 
 
-class NN(EstimatorInterface):
+class Nn(EstimatorInterface):
 
     @staticmethod
     def _calculate_macs(layers: List[Dict[str, Any]]) -> int:
@@ -30,7 +30,7 @@ class NN(EstimatorInterface):
         n_epochs = params["n_epochs"]
         layers = params["layers"]
 
-        macs = NN._calculate_macs(layers)
+        macs = Nn._calculate_macs(layers)
         macs *= 3 * n_epochs * n_samples    # backward to forward ration is typically 2:1
         flops = 2 * macs                    # Assuming 2 flops per MAC
         return flops
@@ -41,7 +41,7 @@ class NN(EstimatorInterface):
         n_samples = params["n_samples"]
         layers = params["layers"]
 
-        macs = NN._calculate_macs(layers)
+        macs = Nn._calculate_macs(layers)
         macs *= n_samples                   # forward only
         flops = 2 * macs                    # Assuming 2 flops per MAC
         return flops

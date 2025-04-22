@@ -1,7 +1,7 @@
 from server.estimators import EstimatorInterface
 
 
-class PCA(EstimatorInterface):
+class Pca(EstimatorInterface):
 
     @staticmethod
     def estimate_train(params):

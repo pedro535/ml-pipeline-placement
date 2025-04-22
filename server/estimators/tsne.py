@@ -1,7 +1,7 @@
 from server.estimators import EstimatorInterface
 
 
-class TSNE(EstimatorInterface):
+class Tsne(EstimatorInterface):
 
     @staticmethod
     def estimate_train(params):

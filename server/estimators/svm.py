@@ -1,7 +1,7 @@
 from server.estimators import EstimatorInterface
 
 
-class SVM(EstimatorInterface):
+class Svm(EstimatorInterface):
 
     @staticmethod
     def estimate_train(params):
