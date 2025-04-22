@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 import keras
 import json
 
@@ -6,7 +6,7 @@ import json
 class ModelDetails:
 
     @staticmethod
-    def tf_dnn_layers(model: keras.Model) -> List:
+    def tf_dnn_layers(model: keras.Model, display: bool = False) -> List[Dict]:
         """
         Return layer details of a TensorFlow DNN model.
         """
@@ -24,7 +24,10 @@ class ModelDetails:
                 details["strides"] = layer.strides
             elif isinstance(layer, keras.layers.MaxPooling2D):
                 details["pool_size"] = layer.pool_size
-            
+
             layers.append(details)
+        
+        if display:
             print(json.dumps(details, indent=4))
+
         return layers
