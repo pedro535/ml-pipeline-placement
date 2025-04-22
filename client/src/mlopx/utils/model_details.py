@@ -2,6 +2,8 @@ from typing import List, Dict
 import keras
 import json
 
+from mlopx.utils import CompactJSONEncoder
+
 
 class ModelDetails:
 
@@ -28,6 +30,7 @@ class ModelDetails:
             layers.append(details)
         
         if display:
-            print(json.dumps(layers, indent=4))
+            print(json.dumps(layers, cls=CompactJSONEncoder, indent=4))
 
         return layers
+    
