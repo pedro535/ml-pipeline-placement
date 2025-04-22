@@ -3,11 +3,11 @@ from server.estimators import (
     LogisticRegression,
     DecisionTree,
     RandomForest,
-    SVM,
-    NN,
-    CNN,
-    PCA,
-    TSNE
+    Svm,
+    Nn,
+    Cnn,
+    Pca,
+    Tsne
 )
 
 class MLEstimator:
@@ -18,11 +18,11 @@ class MLEstimator:
             "logistic_regression": LogisticRegression,
             "decision_tree": DecisionTree,
             "random_forest": RandomForest,
-            "svm": SVM,
-            "nn": NN,
-            "cnn": CNN,
-            "pca": PCA,
-            "tsne": TSNE
+            "svm": Svm,
+            "nn": Nn,
+            "cnn": Cnn,
+            "pca": Pca,
+            "tsne": Tsne
         }
 
 

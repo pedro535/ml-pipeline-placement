@@ -11,10 +11,10 @@ class NodeManager:
         self._load_kube_config()
         self.kube_client = client.CoreV1Api()
         self.nodes: Dict[str, Dict] = {}
-        self.availability: Dict[str, bool] = {}
+        self.occupation: Dict[str, str] = {}
 
         self._fetch_nodes()
-        self._initialize_availability()
+        self._initialize_occupation()
 
 
     def _load_kube_config(self):
@@ -60,11 +60,11 @@ class NodeManager:
             }
 
 
-    def _initialize_availability(self):
+    def _initialize_occupation(self):
         """
         Mark all known nodes as available initially.
         """
-        self.availability = {node_name: True for node_name in self.nodes}
+        self.occupation = {node_name: None for node_name in self.nodes}
 
 
     def _get_memory_usage(self, node_ip: str, total_memory: int) -> float:
@@ -182,27 +182,30 @@ class NodeManager:
         :param node_names: List of node names to check
         :return: True if all nodes are available, False otherwise
         """
-        return all(self.availability[node] for node in node_names)
+        return all([self.occupation[node] is None for node in node_names])
 
 
-    def reserve_nodes(self, node_names: List[str]):
+    def reserve_nodes(self, node_names: List[str], pipeline_id: str):
         """
         Mark nodes as reserved (unavailable).
 
         :param node_names: List of node names to reserve
+        :param pipeline_id: ID of the pipeline reserving the nodes
         """
         for node in node_names:
-            self.availability[node] = False
+            self.occupation[node] = pipeline_id
 
 
-    def release_nodes(self, node_names: List[str]):
+    def release_nodes(self, node_names: List[str], pipeline_id: str):
         """
         Mark nodes as released (available again).
 
         :param node_names: List of node names to release
+        :param pipeline_id: ID of the pipeline releasing the nodes
         """
         for node in node_names:
-            self.availability[node] = True
+            if self.occupation[node] == pipeline_id:
+                self.occupation[node] = None
 
 
     def get_node_platform(self, node: str) -> str:

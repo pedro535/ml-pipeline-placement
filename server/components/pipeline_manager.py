@@ -44,7 +44,7 @@ class PipelineManager:
         print("Assignments")
         print(json.dumps(self.decision_unit.assignments, indent=4, default=str))
         print("Nodes avilability")
-        print(json.dumps(self.node_manager.availability, indent=4, default=str))
+        print(json.dumps(self.node_manager.occupation, indent=4, default=str))
 
         if self.submission_queue.empty():
             return
@@ -93,10 +93,10 @@ class PipelineManager:
         # Check for new pipeline to be executed
         for pipeline_id in self.waiting_list.copy():
             pipeline = self.pipelines[pipeline_id]
-            nodes = [c.node for c in pipeline.get_components()]
+            nodes_required = [c.node for c in pipeline.get_components()]
 
-            if self.node_manager.nodes_available(nodes):
-                self.node_manager.reserve_nodes(nodes)
+            if self.node_manager.nodes_available(nodes_required):
+                self.node_manager.reserve_nodes(nodes_required, pipeline_id)
                 self._run_pipeline(pipeline_id)
                 self.running_pipelines.append(pipeline_id)
                 self.waiting_list.remove(pipeline_id)
@@ -116,7 +116,7 @@ class PipelineManager:
             if c.state == "SUCCEEDED":
                 self.decision_unit.rm_assignment(c.node, pipeline_id, c.name)
                 if not self.decision_unit.is_node_needed(c.node, pipeline_id):
-                    self.node_manager.release_nodes([c.node])
+                    self.node_manager.release_nodes([c.node], pipeline_id)
 
 
     def _terminate_pipelines(self):
@@ -126,7 +126,7 @@ class PipelineManager:
                 self.running_pipelines.remove(pipeline_id)
                 for c in pipeline.get_components():
                     self.decision_unit.rm_assignment(c.node, pipeline_id, c.name)
-                    self.node_manager.release_nodes([c.node])
+                    self.node_manager.release_nodes([c.node], pipeline_id)
 
 
     def _build_pipeline(self, pipeline_id: str, mapping: Dict[str, Tuple[str, str]]):
