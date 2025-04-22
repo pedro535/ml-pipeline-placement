@@ -28,6 +28,6 @@ class ModelDetails:
             layers.append(details)
         
         if display:
-            print(json.dumps(details, indent=4))
+            print(json.dumps(layers, indent=4))
 
         return layers
