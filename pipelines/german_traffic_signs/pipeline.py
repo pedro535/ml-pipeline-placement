@@ -1,4 +1,4 @@
-from mlopx import Pipeline, Component
+from mlopx.pipelines import Pipeline, Component
 
 from data_collection import data_collection
 from model_training import model_training

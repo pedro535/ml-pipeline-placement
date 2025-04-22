@@ -1,4 +1,4 @@
-from mlopx.artifacts import InputDataset, OutputModel
+from mlopx.pipelines.artifacts import InputDataset, OutputModel
 
 
 def model_training(

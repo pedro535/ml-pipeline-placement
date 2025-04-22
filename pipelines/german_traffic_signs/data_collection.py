@@ -1,4 +1,4 @@
-from mlopx.artifacts import OutputDataset
+from mlopx.pipelines.artifacts import OutputDataset
 
 def data_collection(
     dataset_path: str,

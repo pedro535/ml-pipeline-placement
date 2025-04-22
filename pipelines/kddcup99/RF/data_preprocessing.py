@@ -1,4 +1,5 @@
-from mlopx.artifacts import OutputDataset
+from mlopx.pipelines.artifacts import OutputDataset
+
 
 def data_preprocessing(
     dataset_path: str,

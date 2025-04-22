@@ -1,8 +1,9 @@
-from mlopx import Pipeline, Component
+from mlopx.pipelines import Pipeline, Component
 
 from data_preprocessing import data_preprocessing
 from model_training import model_training
 from model_evaluation import model_evaluation
+
 
 BASE_IMAGE = "registry.localhost/kfp_python_base"
 

@@ -1,4 +1,4 @@
-from mlopx.artifacts import InputModel, InputDataset
+from mlopx.pipelines.artifacts import InputModel, InputDataset
 from typing import Dict
 
 
