@@ -38,31 +38,31 @@ cd kddcup99
 cd RF
 python pipeline.py
 sleep 0.5
-# cd ..
+cd ..
 
-# cd SVM
-# python pipeline.py
-# sleep 0.5
+cd SVM
+python pipeline.py
+sleep 0.5
 cd ../../
 
 
-# MNIST
-# cd MNIST
+MNIST
+cd MNIST
 
 # cd LR
 # python pipeline.py
 # sleep 0.5
 # cd ..
 
-# cd NN1
-# python pipeline.py
-# sleep 0.5
+cd NN1
+python pipeline.py
+sleep 0.5
 # cd ..
 
 # cd NN2
 # python pipeline.py
 # sleep 0.5
-# cd ../../
+cd ../../
 
 
 # UNSW_NB15
