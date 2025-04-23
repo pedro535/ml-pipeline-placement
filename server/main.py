@@ -8,6 +8,7 @@ from server.components import PipelineManager, DecisionUnit, NodeManager, DataMa
 from server.settings import (
     WAIT_INTERVAL,
     UPDATE_INTERVAL,
+    CSV_UPDATE_INTERVAL,
     METADATA_FILENAME,
     PIPELINE_FILENAME,
     pipelines_dir
@@ -31,6 +32,11 @@ async def lifespan(app: FastAPI):
         func=pipeline_manager.update_pipelines,
         trigger="interval",
         seconds=UPDATE_INTERVAL,
+    )
+    scheduler.add_job(
+        func=pipeline_manager.add_csv_row,
+        trigger="interval",
+        seconds=CSV_UPDATE_INTERVAL,
     )
     scheduler.start()
     yield

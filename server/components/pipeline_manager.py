@@ -1,8 +1,10 @@
 from queue import Queue
 from typing import List, Dict, Tuple
+import time
 import subprocess
 import requests
 import json
+import csv
 
 from server.ml_pipeline import Pipeline, Component
 from server.components import DecisionUnit, NodeManager
@@ -12,6 +14,7 @@ from server.settings import (
     ENABLE_CACHING,
     PIPELINE_FILENAME,
     KFP_PREFIX,
+    N_PIPELINES_CSV,
     pipelines_dir
 )
 
@@ -23,9 +26,14 @@ class PipelineManager:
         self.node_manager = node_manager
         self.kfp_url = KFP_URL
         self.pipelines: Dict[str, Pipeline] = {}
-        self.submission_queue = Queue()
-        self.waiting_list = []
-        self.running_pipelines = []
+        self.submission_queue: Queue = Queue()
+        self.waiting_list: List[str] = []
+        self.running_pipelines: List[str] = []
+
+        # Csv file to save total running and waiting pipelines
+        self.csv_file = open(N_PIPELINES_CSV, "a", newline="")
+        self.csv_writer = csv.writer(self.csv_file)
+        self.csv_writer.writerow(["timestamp", "type", "running_pipelines", "waiting_pipelines"])
 
 
     def add_pipeline(self, pipeline_id: str, name: str, components: List[Tuple[str, str]]) -> None:
@@ -52,11 +60,24 @@ class PipelineManager:
 
         with open(pipelines_dir / "pipelines.json", "w") as f:
             json.dump(pipelines_as_dict, f, indent=4, default=str)
+        self.csv_file.close()
+
+    
+    def add_csv_row(self, new_window: bool = False) -> None:
+        """
+        Add a new row to the CSV file.
+        """
+        self.csv_writer.writerow([
+            time.time(),
+            "new_window" if new_window else "update",
+            len(self.running_pipelines),
+            len(self.waiting_list)
+        ])
 
 
     def process_pipelines(self) -> None:
         """
-        Process the pipelines in the submission queue.
+        Place and then build the pipelines in the submission queue.
         """
         # DEBUG
         print("Assignments")
@@ -66,6 +87,7 @@ class PipelineManager:
 
         if self.submission_queue.empty():
             return
+        self.add_csv_row(new_window=True)
         
         pipelines_recv = []
         while not self.submission_queue.empty():
