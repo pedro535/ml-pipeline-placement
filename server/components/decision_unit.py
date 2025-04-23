@@ -8,7 +8,8 @@ from server.placers import (
     CustomPlacer,
     FifoRandomPlacer,
     FifoRoundRobinPlacer,
-    RandomRandomPlacer
+    FifoGreedyPlacer,
+    RandomRandomPlacer,
 )
 
 
@@ -16,6 +17,7 @@ placers = {
     "custom": CustomPlacer,
     "fifo_random": FifoRandomPlacer,
     "fifo_round_robin": FifoRoundRobinPlacer,
+    "fifo_greedy": FifoGreedyPlacer,
     "random_random": RandomRandomPlacer,
 }
 

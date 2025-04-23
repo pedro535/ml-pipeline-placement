@@ -54,7 +54,7 @@ class FifoRoundRobinPlacer(PlacerInterface):
 
     def _get_node(self, component: Component, metadata: Dict) -> Tuple:
         """
-        Get a node that has sufficient memory for the component.
+        Select a node to place the component according to the strategy.
         """
         dataset = metadata["dataset"]
         size = max(

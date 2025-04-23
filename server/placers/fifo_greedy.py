@@ -1,15 +1,11 @@
-import random
 from typing import Dict, List, Tuple, Set
 
 from server.placers import PlacerInterface
 from server.ml_pipeline import Pipeline, Component
 from server.components import NodeManager, DataManager
-from server.settings import SEED
-
-random.seed(SEED)
 
 
-class RandomRandomPlacer(PlacerInterface):
+class FifoGreedyPlacer(PlacerInterface):
 
     def __init__(self, node_manager: NodeManager, data_manager: DataManager):
         self.node_manager = node_manager
@@ -25,22 +21,18 @@ class RandomRandomPlacer(PlacerInterface):
         assignments_counts: Dict[str, int]
     ) -> List[Dict]:
         """
-        Place pipelines on nodes following a fully random strategy.
+        Place pipelines on nodes following a FIFO greedy strategy.
         """
-        
         self.assignments = assignments
         self.assignments_counts = assignments_counts
+
         self.node_manager.update_nodes()
-
-        # Random execution order
-        random.shuffle(pipelines)
-
         placements = []
         for pipeline in pipelines:
             metadata = pipeline.get_metadata()
             mapping = {}
             for component in pipeline.get_components():
-                node, platform = self._get_random_node(component, metadata)
+                node, platform = self._get_node(component, metadata)
                 mapping[component.name] = (node, platform)
                 self._add_assignment(node, pipeline.id, component.name)
 
@@ -52,7 +44,7 @@ class RandomRandomPlacer(PlacerInterface):
         return placements
 
 
-    def _get_random_node(self, component: Component, metadata: Dict) -> Tuple:
+    def _get_node(self, component: Component, metadata: Dict) -> Tuple:
         """
         Select a node to place the component according to the strategy.
         """
@@ -63,11 +55,11 @@ class RandomRandomPlacer(PlacerInterface):
         )
 
         nodes = self.node_manager.get_nodes()
-        random_node = random.choice(nodes)
-        while not self._has_sufficient_memory(size, random_node):
-            random_node = random.choice(nodes)
-
-        node_name = random_node["name"]
+        
+        # Sort by least loaded node, then more cpu cores, then more memory
+        nodes = sorted(nodes, key=lambda x: (self.assignments_counts[x["name"]], -x["cpu_cores"], -x["memory"]))
+        nodes = [n for n in nodes if self._has_sufficient_memory(size, n)]
+        node_name = nodes[0]["name"]
         node_platform = self.node_manager.get_node_platform(node_name)
         return node_name, node_platform
 
