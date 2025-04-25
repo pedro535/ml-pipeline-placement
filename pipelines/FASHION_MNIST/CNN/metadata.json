@@ -1,0 +1,82 @@
+{
+    "components_type": {
+        "data_preprocessing": "preprocessing",
+        "model_training": "training",
+        "model_evaluation": "evaluation"
+    },
+    "dataset": {
+        "name": "FASHION_MNIST",
+        "type": "image",
+        "train_percentage": 0.8,
+        "val_percentage": 0,
+        "test_percentage": 0.2,
+        "normalized": false,
+        "original": {
+            "n_samples": 70000,
+            "input_shape": [28, 28, 1],
+            "n_classes": 10
+        },
+        "preprocessed": {
+            "n_samples": 70000,
+            "input_shape": [28, 28, 1],
+            "n_classes": 10
+        }
+    },
+    "model": {
+        "type" : "cnn",
+        "params" : {
+            "n_epochs": 10,
+            "batch_size": 32,
+            "layers": [
+                {
+                    "type": "Conv2D",
+                    "input_shape": [28, 28, 1],
+                    "output_shape": [26, 26, 32],
+                    "params": 320,
+                    "kernel_size": [3, 3],
+                    "strides": [1, 1]
+                },
+                {
+                    "type": "MaxPooling2D",
+                    "input_shape": [26, 26, 32],
+                    "output_shape": [13, 13, 32],
+                    "params": 0,
+                    "pool_size": [2, 2]
+                },
+                {
+                    "type": "Conv2D",
+                    "input_shape": [13, 13, 32],
+                    "output_shape": [11, 11, 64],
+                    "params": 18496,
+                    "kernel_size": [3, 3],
+                    "strides": [1, 1]
+                },
+                {
+                    "type": "MaxPooling2D",
+                    "input_shape": [11, 11, 64],
+                    "output_shape": [5, 5, 64],
+                    "params": 0,
+                    "pool_size": [2, 2]
+                },
+                {
+                    "type": "Flatten",
+                    "input_shape": [5, 5, 64],
+                    "output_shape": [1600],
+                    "params": 0
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [1600],
+                    "output_shape": [128],
+                    "params": 204928
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [128],
+                    "output_shape": [10],
+                    "params": 1290
+                }
+            ]
+        }
+    }
+}

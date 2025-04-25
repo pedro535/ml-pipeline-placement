@@ -1,0 +1,72 @@
+{
+    "components_type": {
+        "data_preprocessing": "preprocessing",
+        "model_training": "training",
+        "model_evaluation": "evaluation"
+    },
+    "dataset": {
+        "name": "UNSW_NB15",
+        "type": "tabular",
+        "train_percentage": 0.8,
+        "val_percentage": 0,
+        "test_percentage": 0.2,
+        "original": {
+            "n_samples": 257673,
+            "n_features": 43,
+            "n_classes": 2,
+            "data_types": {
+                "float64": 11,
+                "object": 3,
+                "int64": 29
+            }
+        },
+        "preprocessed": {
+            "n_samples": 257673,
+            "n_features": 41,
+            "n_classes": 2,
+            "data_types": {
+                "float64": 11,
+                "int64": 32
+            }
+        }
+    },
+    "model": {
+        "type" : "nn",
+        "params" : {
+            "n_epochs": 10,
+            "batch_size": 32,
+            "layers": [
+                {
+                    "type": "Dense",
+                    "input_shape": [42],
+                    "output_shape": [128],
+                    "params": 5504
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [128],
+                    "output_shape": [96],
+                    "params": 12384
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [96],
+                    "output_shape": [64],
+                    "params": 6208
+                },
+                {
+                    "type": "Dropout",
+                    "input_shape": [64],
+                    "output_shape": [64],
+                    "params": 0
+                },
+                {
+                    "type": "Dense",
+                    "input_shape": [64],
+                    "output_shape": [2],
+                    "params": 130
+                }
+            ]
+        }
+    }
+}
