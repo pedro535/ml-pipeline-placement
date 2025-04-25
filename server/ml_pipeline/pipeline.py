@@ -126,4 +126,4 @@ class Pipeline:
                 component.end_time = end_time if end_time > EPOCH_DATE else None
                 duration = (end_time - start_time).total_seconds()
                 component.duration = round(duration, 2) if duration >= 0 else None
-                component.state = task["state"]
+                component.state = task.get("state")

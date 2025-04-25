@@ -22,7 +22,7 @@ KFP_PREFIX = "kfp_"
 METADATA_FILENAME = "metadata.json"
 DATASETS_PATH = os.getenv("DATASETS_PATH")
 EPOCH_DATE = datetime.fromtimestamp(0, tz=tz.tzutc())
-PLACER = os.getenv("PLACER", "custom")
+PLACER = os.getenv("PLACER")
 SEED = int(os.getenv("SEED", "42"))
 N_PIPELINES_CSV = os.getenv("N_PIPELINES_CSV")
 CSV_UPDATE_INTERVAL = int(os.getenv("CSV_UPDATE_INTERVAL", "30"))
