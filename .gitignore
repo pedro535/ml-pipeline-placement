@@ -14,6 +14,8 @@ data/CIFAR_10/x.npy
 data/CIFAR_10/y.npy
 data/MNIST/x.npy
 data/MNIST/y.npy
+data/FASHION_MNIST/x.npy
+data/FASHION_MNIST/y.npy
 
 # Notebooks with pipelines
 pipelines/adult_income/DT/pipeline.ipynb
