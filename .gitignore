@@ -44,7 +44,6 @@ results/output/
 results/plots/
 results/run_1
 results/run_2
-results/*.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
