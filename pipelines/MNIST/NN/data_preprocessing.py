@@ -29,9 +29,9 @@ def data_preprocessing(
         x, y, test_size=0.2, shuffle=True, random_state=42
     )
 
-    # Flatten images
-    x_train = x_train.reshape(x_train.shape[0], -1)
-    x_test = x_test.reshape(x_test.shape[0], -1)
+    # Expand dimensions for CNN (28x28x1)
+    x_train = x_train.reshape(-1, 28, 28, 1)
+    x_test = x_test.reshape(-1, 28, 28, 1)
             
     # Save data as artifacts
     npy_save(x_train, x_train_ds.path)
