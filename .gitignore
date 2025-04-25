@@ -1,25 +1,7 @@
 # Datasets
-data/heart_disease/heart.csv
-data/german_traffic_signs/Meta/
-data/german_traffic_signs/Train/
-data/german_traffic_signs/Test/
-data/german_traffic_signs/Meta.csv
-data/german_traffic_signs/Test.csv
-data/german_traffic_signs/Train.csv
-data/adult_income/adult.csv
+data/**/*.npy
+data/**/*.csv
 data/kddcup99/kddcup.data_10_percent
-data/UNSW_NB15/UNSW_NB15.csv
-data/california/california.csv
-data/CIFAR_10/x.npy
-data/CIFAR_10/y.npy
-data/MNIST/x.npy
-data/MNIST/y.npy
-data/FASHION_MNIST/x.npy
-data/FASHION_MNIST/y.npy
-data/credit_card/credit_card.csv
-data/wine_quality/wine_quality.csv
-data/citrus_leaves/x.npy
-data/citrus_leaves/y.npy
 
 # Notebooks with pipelines
 pipelines/**/*.ipynb
