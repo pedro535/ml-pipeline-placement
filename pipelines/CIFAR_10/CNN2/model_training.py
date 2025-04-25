@@ -7,10 +7,16 @@ def model_training(
     model_artifact: OutputModel
 ):
     
+    import random
     import numpy as np
     import tensorflow as tf
     import keras
     from keras import layers
+
+    seed = 42
+    tf.random.set_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
     device = "/GPU:0" if tf.config.list_physical_devices("GPU") else "/CPU:0"
 
