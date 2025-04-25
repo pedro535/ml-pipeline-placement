@@ -84,7 +84,7 @@ class PipelineManager:
             pipeline_id = self.submission_queue.get()
             pipeline = self.pipelines[pipeline_id]
             pipeline.update(time_window=self.time_window)
-            pipelines_recv.append(pipeline_id)
+            pipelines_recv.append(pipeline)
     
         placements = self.decision_unit.get_placements(pipelines_recv)
 
@@ -254,12 +254,10 @@ class PipelineManager:
         """
         Add a new row to the CSV file.
         """
-        self.csv_writer.writerow([
-            time.time(),
-            "new_window" if new_window else "update",
-            len(self.running_pipelines),
-            len(self.waiting_list)
-        ])
+        timestamp = time.time()
+        self.csv_writer.writerow([timestamp, "update", len(self.running_pipelines), len(self.waiting_list)])
+        if new_window:
+            self.csv_writer.writerow([timestamp, "new_window", len(self.running_pipelines), len(self.waiting_list)])
 
 
     def print_running_pipelines(self) -> None:
