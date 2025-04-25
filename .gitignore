@@ -16,6 +16,7 @@ data/MNIST/x.npy
 data/MNIST/y.npy
 data/FASHION_MNIST/x.npy
 data/FASHION_MNIST/y.npy
+data/credit_card/credit_card.csv
 
 # Notebooks with pipelines
 pipelines/**/*.ipynb

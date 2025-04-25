@@ -1,0 +1,38 @@
+{
+    "components_type": {
+        "data_preprocessing": "preprocessing",
+        "model_training": "training",
+        "model_evaluation": "evaluation"
+    },
+    "dataset": {
+        "name": "credit_card",
+        "type": "tabular",
+        "train_percentage": 0.8,
+        "val_percentage": 0,
+        "test_percentage": 0.2,
+        "original": {
+            "n_samples": 30000,
+            "n_features": 24,
+            "n_classes": 2,
+            "data_types": {
+                "int64": 12,
+                "float64": 13
+            }
+        },
+        "preprocessed": {
+            "n_samples": 30000,
+            "n_features": 23,
+            "n_classes": 2,
+            "data_types": {
+                "int64": 11,
+                "float64": 13
+            }
+        }
+    },
+    "model": {
+        "type" : "decision_tree",
+        "params" : {
+            "max_depth" : 10
+        }
+    }
+}

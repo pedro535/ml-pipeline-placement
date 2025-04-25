@@ -47,22 +47,22 @@ Time window 3:
 LR: 2
 - adult income
 - (thyroid/diabetes/heart disease | wine quality)
-- (credit card default)
+- credit card default
 
 DT: 4
 - adult income
 - (thyroid/diabetes/heart disease | wine quality)
-- (credit card default)
+- credit card default
 
 RF: 4
 - kddcup99
 - UNSWN-NB15
-- (Credit Card Default)
+- Credit Card Default
 
 SVM: 4
 - kddcup99
 - UNSWN-NB15
-- (Credit Card Default)
+- Credit Card Default
 
 NN: 2
 - UNSWN-NB15
