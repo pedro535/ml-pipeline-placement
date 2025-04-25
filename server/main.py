@@ -33,11 +33,6 @@ async def lifespan(app: FastAPI):
         trigger="interval",
         seconds=UPDATE_INTERVAL,
     )
-    scheduler.add_job(
-        func=pipeline_manager.add_csv_row,
-        trigger="interval",
-        seconds=CSV_UPDATE_INTERVAL,
-    )
     scheduler.start()
     yield
     scheduler.shutdown()

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # TOTAL EXECUTION TIMES
 # =====================
 
-def total_exec_time(pipelines: Dict) -> int:
+def total_exec_time(pipelines: List[Dict]) -> int:
     """
     Total execution time since start to finish of all pipelines.
     """
@@ -25,11 +25,11 @@ def total_exec_time(pipelines: Dict) -> int:
     return int(delta)
 
 
-def total_exec_time_avg(experiments: List[Dict]) -> float:
+def total_exec_time_multiple(experiments: List[List[Dict]]) -> float:
     """
-    Average of total execution time for different experiments.
+    Average of total execution time for multiple experiments.
     """
-    exec_times = [total_exec_time(pipeline) for pipeline in experiments]
+    exec_times = [total_exec_time(pipelines) for pipelines in experiments]
     return round(sum(exec_times) / len(exec_times), 2)
 
 
@@ -37,7 +37,7 @@ def total_exec_time_avg(experiments: List[Dict]) -> float:
 # INDIVIDUAL EXECUTION TIMES
 # ==========================
 
-def pipeline_exec_times(pipelines: Dict) -> Dict[str, int]:
+def pipeline_exec_times(pipelines: List[Dict]) -> Dict[str, int]:
     """
     Execution time of each individual pipeline.
     """
@@ -51,13 +51,13 @@ def pipeline_exec_times(pipelines: Dict) -> Dict[str, int]:
     return execution_times
 
 
-def pipeline_exec_times_avg(experiments: List[Dict]) -> Dict[str, float]:
+def pipeline_exec_times_multiple(experiments: List[List[Dict]]) -> Dict[str, float]:
     """
-    Average execution time of each individual pipeline.
+    Average execution time of each individual pipeline across multiple experiments.
     """
     avg_exec_times = {}
-    for pipeline in experiments:
-        exec_times = pipeline_exec_times(pipeline)
+    for pipelines in experiments:
+        exec_times = pipeline_exec_times(pipelines)
         for name, exec_time in exec_times.items():
             if name not in avg_exec_times:
                 avg_exec_times[name] = []
@@ -74,7 +74,7 @@ def pipeline_exec_times_avg(experiments: List[Dict]) -> Dict[str, float]:
 # TOTAL WAITING TIMES
 # ===================
 
-def total_wait_time(pipelines: Dict) -> int:
+def total_wait_time(pipelines: List[Dict]) -> int:
     """
     Sum of all waiting times of all pipelines.
     """
@@ -88,11 +88,11 @@ def total_wait_time(pipelines: Dict) -> int:
     return sum(wait_times)
 
 
-def total_wait_time_avg(experiments: List[Dict]) -> float:
+def total_wait_time_multiple(experiments: List[List[Dict]]) -> float:
     """
-    Average of total waiting time for different experiments.
+    Average of total waiting time for multiple experiments.
     """
-    wait_times = [total_wait_time(pipeline) for pipeline in experiments]
+    wait_times = [total_wait_time(pipelines) for pipelines in experiments]
     return round(sum(wait_times) / len(wait_times), 2)
 
 
@@ -100,7 +100,7 @@ def total_wait_time_avg(experiments: List[Dict]) -> float:
 # INDIVIDUAL WAITING TIMES
 # ==========================
 
-def pipeline_wait_times(pipelines: Dict):
+def pipeline_wait_times(pipelines: List[Dict]):
     """
     Waiting time of each individual pipeline.
     """
@@ -114,13 +114,13 @@ def pipeline_wait_times(pipelines: Dict):
     return wait_times
 
 
-def pipeline_wait_times_avg(experiments: List[Dict]) -> Dict[str, float]:
+def pipeline_wait_times_multiple(experiments: List[List[Dict]]) -> Dict[str, float]:
     """
-    Average waiting time of each individual pipeline.
+    Average waiting time of each individual pipeline across multiple experiments.
     """
     avg_wait_times = {}
-    for pipeline in experiments:
-        wait_times = pipeline_wait_times(pipeline)
+    for pipelines in experiments:
+        wait_times = pipeline_wait_times(pipelines)
         for name, wait_time in wait_times.items():
             if name not in avg_wait_times:
                 avg_wait_times[name] = []
@@ -128,8 +128,21 @@ def pipeline_wait_times_avg(experiments: List[Dict]) -> Dict[str, float]:
 
     avg_wait_times = {
         name: round(sum(times) / len(times), 2)
-        for name, times in avg_wait_times.items()}
+        for name, times in avg_wait_times.items()
+    }
     return avg_wait_times
+
+
+def pipeline_wait_times_avg(pipelines: List[Dict] = None, experiments: List[List[Dict]] = None) -> float:
+    """
+    Overall average waiting time for a pipeline.
+    """
+    if pipelines is not None and experiments is None:
+        wait_times = pipeline_wait_times(pipelines)
+    elif experiments is not None and pipelines is None:
+        wait_times = pipeline_wait_times_multiple(experiments)
+    wait_time_avg = sum(wait_times.values()) / len(wait_times)
+    return round(wait_time_avg, 2)
 
 
 # ====================

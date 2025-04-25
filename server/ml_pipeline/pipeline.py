@@ -22,6 +22,7 @@ class Pipeline:
         self.finished_at = None
         self.last_update = None
         self.duration = None
+        self.time_window = None
         self._load_metadata()
 
 
