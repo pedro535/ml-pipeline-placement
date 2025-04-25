@@ -5,91 +5,97 @@
         "model_evaluation": "evaluation"
     },
     "dataset": {
-        "name": "CIFAR_10",
+        "name": "citrus_leaves",
         "type": "image",
         "train_percentage": 0.8,
         "val_percentage": 0,
         "test_percentage": 0.2,
         "normalized": false,
         "original": {
-            "n_samples": 60000,
-            "input_shape": [32, 32, 3],
-            "n_classes": 10
+            "n_samples": 594,
+            "input_shape": [256, 256, 3],
+            "n_classes": 4
         },
         "preprocessed": {
-            "n_samples": 60000,
-            "input_shape": [32, 32, 3],
-            "n_classes": 10
+            "n_samples": 594,
+            "input_shape": [256, 256, 3],
+            "n_classes": 4
         }
     },
     "model": {
         "type" : "cnn",
         "params" : {
             "n_epochs": 10,
-            "batch_size": 64,
+            "batch_size": 32,
             "layers": [
                 {
                     "type": "Conv2D",
-                    "input_shape": [32, 32, 3],
-                    "output_shape": [30, 30, 32],
+                    "input_shape": [256, 256, 3],
+                    "output_shape": [254, 254, 32],
                     "params": 896,
                     "kernel_size": [3, 3],
                     "strides": [1, 1]
                 },
                 {
                     "type": "MaxPooling2D",
-                    "input_shape": [30, 30, 32],
-                    "output_shape": [15, 15, 32],
+                    "input_shape": [254, 254, 32],
+                    "output_shape": [127, 127, 32],
                     "params": 0,
                     "pool_size": [2, 2]
                 },
                 {
                     "type": "Conv2D",
-                    "input_shape": [15, 15, 32],
-                    "output_shape": [13, 13, 64],
+                    "input_shape": [127, 127, 32],
+                    "output_shape": [125, 125, 64],
                     "params": 18496,
                     "kernel_size": [3, 3],
                     "strides": [1, 1]
                 },
                 {
                     "type": "MaxPooling2D",
-                    "input_shape": [13, 13, 64],
-                    "output_shape": [6, 6, 64],
+                    "input_shape": [125, 125, 64],
+                    "output_shape": [62, 62, 64],
                     "params": 0,
                     "pool_size": [2, 2]
                 },
                 {
                     "type": "Conv2D",
-                    "input_shape": [6, 6, 64],
-                    "output_shape": [4, 4, 128],
+                    "input_shape": [62, 62, 64],
+                    "output_shape": [60, 60, 128],
                     "params": 73856,
                     "kernel_size": [3, 3],
                     "strides": [1, 1]
                 },
                 {
                     "type": "MaxPooling2D",
-                    "input_shape": [4, 4, 128],
-                    "output_shape": [2, 2, 128],
+                    "input_shape": [60, 60, 128],
+                    "output_shape": [30, 30, 128],
                     "params": 0,
                     "pool_size": [2, 2]
                 },
                 {
                     "type": "Flatten",
-                    "input_shape": [2, 2, 128],
-                    "output_shape": [512],
+                    "input_shape": [30, 30, 128],
+                    "output_shape": [115200],
                     "params": 0
                 },
                 {
                     "type": "Dense",
-                    "input_shape": [512],
+                    "input_shape": [115200],
                     "output_shape": [128],
-                    "params": 65664
+                    "params": 14745728
+                },
+                {
+                    "type": "Dropout",
+                    "input_shape": [128],
+                    "output_shape": [128],
+                    "params": 0
                 },
                 {
                     "type": "Dense",
                     "input_shape": [128],
-                    "output_shape": [10],
-                    "params": 1290
+                    "output_shape": [4],
+                    "params": 516
                 }
             ]
         }

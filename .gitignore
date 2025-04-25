@@ -18,6 +18,8 @@ data/FASHION_MNIST/x.npy
 data/FASHION_MNIST/y.npy
 data/credit_card/credit_card.csv
 data/wine_quality/wine_quality.csv
+data/citrus_leaves/x.npy
+data/citrus_leaves/y.npy
 
 # Notebooks with pipelines
 pipelines/**/*.ipynb

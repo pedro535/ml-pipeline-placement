@@ -25,18 +25,20 @@ def model_training(
     y_train = np.load(y_train_ds.path)
 
     # Define the model
-    input_shape = (32, 32, 3)
-    n_classes = 10
-    
+    input_shape = (256, 256, 3)
+    n_classes = 4
+
     model = keras.Sequential([
-        keras.layers.Conv2D(32, (3, 3), activation='relu', padding='same', input_shape=input_shape),
-        keras.layers.MaxPooling2D((2, 2)),
-        keras.layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
-        keras.layers.MaxPooling2D((2, 2)),
-        keras.layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
-        keras.layers.MaxPooling2D((2, 2)),
+        keras.Input(shape=input_shape),
+        keras.layers.Conv2D(32, (3, 3), activation='relu'),
+        keras.layers.MaxPooling2D(2, 2),
+        keras.layers.Conv2D(64, (3, 3), activation='relu'),
+        keras.layers.MaxPooling2D(2, 2),
+        keras.layers.Conv2D(128, (3, 3), activation='relu'),
+        keras.layers.MaxPooling2D(2, 2),
         keras.layers.Flatten(),
         keras.layers.Dense(128, activation='relu'),
+        keras.layers.Dropout(0.5),
         keras.layers.Dense(n_classes, activation='softmax')
     ])
 
@@ -49,7 +51,7 @@ def model_training(
 
     # Train the model
     with tf.device(device):
-        model.fit(x_train, y_train, epochs=5, batch_size=64)
+        model.fit(x_train, y_train, epochs=10, batch_size=32)
 
     # Save model
     model.save(model_artifact.path + "/model.h5")
