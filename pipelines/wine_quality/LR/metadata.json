@@ -1,0 +1,38 @@
+{
+    "components_type": {
+        "data_preprocessing": "preprocessing",
+        "model_training": "training",
+        "model_evaluation": "evaluation"
+    },
+    "dataset": {
+        "name": "wine_quality",
+        "type": "tabular",
+        "train_percentage": 0.8,
+        "val_percentage": 0,
+        "test_percentage": 0.2,
+        "original": {
+            "n_samples": 4898,
+            "n_features": 11,
+            "n_classes": 2,
+            "data_types": {
+                "int64": 1,
+                "float64": 11
+            }
+        },
+        "preprocessed": {
+            "n_samples": 4898,
+            "n_features": 11,
+            "n_classes": 2,
+            "data_types": {
+                "int64": 1,
+                "float64": 11
+            }
+        }
+    },
+    "model": {
+        "type" : "logistic_regression",
+        "params" : {
+            "n_iter": 100
+        }
+    }
+}

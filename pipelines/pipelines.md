@@ -46,12 +46,12 @@ Time window 3:
 
 LR: 2
 - adult income
-- (thyroid/diabetes/heart disease | wine quality)
+- wine quality
 - credit card default
 
 DT: 4
 - adult income
-- (thyroid/diabetes/heart disease | wine quality)
+- wine quality
 - credit card default
 
 RF: 4
