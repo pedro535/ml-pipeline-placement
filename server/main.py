@@ -1,6 +1,7 @@
 import uuid
 from typing import List
 from fastapi import FastAPI, UploadFile, Form, File
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -8,7 +9,6 @@ from server.components import PipelineManager, DecisionUnit, NodeManager, DataMa
 from server.settings import (
     WAIT_INTERVAL,
     UPDATE_INTERVAL,
-    CSV_UPDATE_INTERVAL,
     METADATA_FILENAME,
     PIPELINE_FILENAME,
     pipelines_dir
@@ -40,6 +40,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -50,12 +58,27 @@ def handle_root():
     }
 
 
+@app.get("/datasets/")
+def update_datasets():
+    return {
+        "datasets": data_manager.get_datasets()
+    }
+
+
 @app.get("/datasets/update/")
 def update_datasets():
     data_manager.update_datasets()
     return {
         "status": "success",
         "message": "Datasets updated successfully",
+    }
+
+
+@app.get("/nodes/")
+def get_nodes():
+    return {
+        "nodes": node_manager.get_nodes(),
+        "assignments": decision_unit.assignments_counts
     }
 
 

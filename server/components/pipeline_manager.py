@@ -211,8 +211,9 @@ class PipelineManager:
             output = run.stdout.decode("utf-8")
             print("----- Pipeline output:")
             print(output)
-            kfp_id = output.split("Run ID:")[-1].strip()
-            pipeline.update(kfp_id=kfp_id, state="RUNNING")
+            if "Run ID:" in output:
+                kfp_id = output.split("Run ID:")[-1].strip()
+                pipeline.update(kfp_id=kfp_id, state="RUNNING")
 
         except Exception as e:
             print("Error while running pipeline:", e)

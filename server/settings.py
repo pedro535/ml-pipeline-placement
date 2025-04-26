@@ -25,7 +25,6 @@ EPOCH_DATE = datetime.fromtimestamp(0, tz=tz.tzutc())
 PLACER = os.getenv("PLACER")
 SEED = int(os.getenv("SEED", "42"))
 N_PIPELINES_CSV = os.getenv("N_PIPELINES_CSV")
-CSV_UPDATE_INTERVAL = int(os.getenv("CSV_UPDATE_INTERVAL", "30"))
 
 pipelines_dir = Path(PIPELINES_DIR).resolve()
 pipelines_dir.mkdir(parents=True, exist_ok=True)

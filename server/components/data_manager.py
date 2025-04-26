@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import subprocess
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 import numpy as np
 
 from server.settings import DATASETS_PATH
@@ -69,6 +69,20 @@ class DataManager:
         total_size = sample_size * n_samples
         return total_size // 1024
 
+    def get_datasets(self) -> List[Dict]:
+        """
+        Get the dataset registry.
+        """
+        return [
+            {
+                "name": name,
+                "path": str(details["path"]),
+                "size": details["size"],
+                "modified_at": details["modified_at"].strftime("%Y-%m-%d %H:%M:%S")
+            }
+            for name, details in self.datasets.items()
+        ]
+    
 
     def update_datasets(self):
         """
