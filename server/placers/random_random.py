@@ -79,7 +79,7 @@ class RandomRandomPlacer(PlacerInterface):
         memory = node["memory"]
         memory_usage = node["memory_usage"]
         memory_free = memory - (memory * memory_usage)
-        memory_required = size * 1.5
+        memory_required = size * 2
         return memory_free > memory_required
     
 

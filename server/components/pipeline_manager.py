@@ -169,6 +169,8 @@ class PipelineManager:
                 for c in pipeline.get_components():
                     self.decision_unit.rm_assignment(c.node, pipeline_id, c.name)
                     self.node_manager.release_nodes([c.node], pipeline_id)
+            if pipeline.state == "SUCCEEDED":
+                self.delete_run_kfp(pipeline.kfp_id)
 
 
     def _build_pipeline(self, pipeline_id: str, mapping: Dict[str, Tuple[str, str]]) -> None:
@@ -249,6 +251,17 @@ class PipelineManager:
         except requests.exceptions.RequestException:
             print("Error fetching runs from KFP API")
             return {}
+        
+    
+    def delete_run_kfp(self, kfp_id: str) -> None:
+        """
+        Delete a run from the KFP API.
+        """
+        url = f"{self.kfp_url}{KFP_API_ENDPOINT}/runs/{kfp_id}"
+        try:
+            requests.delete(url)
+        except requests.exceptions.RequestException:
+            print("Error deleting run from KFP API")
         
 
     def _add_csv_row(self, new_window: bool = False) -> None:
