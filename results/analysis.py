@@ -1,6 +1,5 @@
 from typing import List, Dict
 from datetime import datetime
-import matplotlib.pyplot as plt
 
 
 # =====================
@@ -169,3 +168,75 @@ def time_reduced_ratio(times: Dict[str, int|float], main_strategy: str) -> Dict[
         if strategy != main_strategy:
             ratios[strategy] = round(time / times[main_strategy], 2)
     return ratios
+
+
+# ====================
+# KFP ANALYSIS METHODS
+# ====================
+
+def kfp_get_runs(data):
+    """
+    Get the runs from the KFP data.
+    """
+    runs = []
+    kfp_runs = data["runs"]
+
+    for pipeline in kfp_runs:
+        name = pipeline["display_name"].split()[0].replace("-", "_")
+        created_at = pipeline["created_at"]
+        created_at = datetime.fromisoformat(created_at)
+
+        scheduled_at = pipeline["scheduled_at"]
+        scheduled_at = datetime.fromisoformat(scheduled_at)
+        
+        finished_at = pipeline["finished_at"]
+        finished_at = datetime.fromisoformat(finished_at)
+
+        runs.append({
+            "name": name,
+            "created_at": created_at,
+            "scheduled_at": scheduled_at,
+            "finished_at": finished_at,
+            "duration": (finished_at - scheduled_at).total_seconds(),
+        })
+    return runs
+
+
+def kfp_total_exec_time(runs) -> float:
+    """
+    Total execution time since start to finish of all pipelines (KFP).
+    """
+    starts = []
+    ends = []
+    for run in runs:
+        starts.append(run["created_at"])
+        ends.append(run["finished_at"])
+    min_start = min(starts)
+    max_end = max(ends)
+    total_time = max_end - min_start
+    return total_time.total_seconds()
+
+
+def kfp_total_exec_time_multiple(experiments: List[Dict]) -> float:
+    """
+    Average of total execution time for multiple KFP experiments.
+    """
+    total_times = [kfp_total_exec_time(runs) for runs in experiments]
+    return round(sum(total_times) / len(total_times), 2)
+
+
+def kfp_pipeline_exec_times_multiple(all_runs: list) -> dict:
+    """
+    Average execution time of each individual pipeline across multiple KFP runs.
+    """
+    pipelines = {}
+    for runs in all_runs:
+        for pipeline in runs:
+            name = pipeline["name"]
+            if name not in pipelines:
+                pipelines[name] = []
+            pipelines[name].append(pipeline["duration"])
+
+    for name, durations in pipelines.items():
+        pipelines[name] = round(sum(durations) / len(durations) if durations else 0, 2)
+    return pipelines

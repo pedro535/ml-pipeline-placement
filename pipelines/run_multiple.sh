@@ -34,29 +34,48 @@ echo "==== Submission 1 ===="
 for pipeline in "${submission1[@]}"; do
     echo "==== Pipeline $pipeline ===="
     cd "$pipeline"
-    # python pipeline.py
+    python pipeline.py
     sleep 0.4
     cd ../../
 done
 
-sleep 240
+sleep 0.4
+curl "http://localhost:8000/process/"
+
+
+for i in {1..240}; do
+    echo "Sleeping for $i seconds..."
+    sleep 1
+done
+
 
 echo "==== Submission 2 ===="
 for pipeline in "${submission2[@]}"; do
     echo "==== Pipeline $pipeline ===="
     cd "$pipeline"
-    # python pipeline.py
+    python pipeline.py
     sleep 0.4
     cd ../../
 done
 
-sleep 240
+sleep 0.4
+curl "http://localhost:8000/process/"
+
+
+for i in {1..240}; do
+    echo "Sleeping for $i seconds..."
+    sleep 1
+done
+
 
 echo "==== Submission 3 ===="
 for pipeline in "${submission3[@]}"; do
     echo "==== Pipeline $pipeline ===="
     cd "$pipeline"
-    # python pipeline.py
+    python pipeline.py
     sleep 0.4
     cd ../../
 done
+
+sleep 0.4
+curl "http://localhost:8000/process/"

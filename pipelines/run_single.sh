@@ -20,3 +20,6 @@ for pipeline in "${pipelines[@]}"; do
     sleep 0.4
     cd ../../
 done
+
+sleep 0.4
+curl "http://localhost:8000/process/"
