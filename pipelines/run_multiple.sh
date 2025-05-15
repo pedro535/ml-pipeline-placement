@@ -18,7 +18,7 @@ submission2=(
     "kddcup99/SVM"
     "adult_income/LR"
     "UNSW_NB15/RF"
-    "UNSW_NB15/SVM"
+    "UNSW_NB15/NN"
 )
 
 submission3=(
