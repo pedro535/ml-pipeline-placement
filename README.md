@@ -72,6 +72,13 @@ PLACER="fifo_round_robin"
 PLACER="custom"
 ```
 
+### Pipeline Execution
+The placement system interacts with an instance of Kubeflow Pipelines (KFP) to execute the submitted pipelines. 
+
+Once the system schedules and places the pipelines, it compiles the pipeline definition into a KFP pipeline and submits it for execution. This compilation process specifies the cluster nodes on which the tasks will run, based on the placement decisions made by the selected strategy.
+
+The system manages the execution of the pipelines by monitoring their status through the KFP API. It retrieves the execution status of each pipeline and updates their status accordingly. The system also handles the waiting and running states of the pipelines, ensuring that they are executed in a timely manner.
+
 ### Performance Results
 To evaluate the performance of the placement system, after running the desired pipelines, when the system is stopped, it will generate a `pipelines.json` file and a `n_pipelines.csv` file in the pipelines' directory (defined by the `PIPELINES_DIR` environment variable).
 
