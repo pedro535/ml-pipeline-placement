@@ -1,6 +1,14 @@
 from typing import List, Dict
 from datetime import datetime
 
+def stddev(values):
+    n = len(values)
+    if n == 0:
+        return 0.0
+    mean = sum(values) / n
+    variance = sum((x - mean) ** 2 for x in values) / n
+    return round(variance ** 0.5, 2)
+
 
 # =====================
 # TOTAL EXECUTION TIMES
@@ -24,11 +32,15 @@ def total_exec_time(pipelines: List[Dict]) -> int:
     return int(delta)
 
 
-def total_exec_time_multiple(experiments: List[List[Dict]]) -> float:
+def total_exec_time_multiple(experiments: List[List[Dict]], std=False):
     """
     Average of total execution time for multiple experiments.
     """
     exec_times = [total_exec_time(pipelines) for pipelines in experiments]
+    
+    if std:
+        std_dev = stddev(exec_times)
+        return round(sum(exec_times) / len(exec_times), 2), std_dev
     return round(sum(exec_times) / len(exec_times), 2)
 
 
@@ -50,7 +62,7 @@ def pipeline_exec_times(pipelines: List[Dict]) -> Dict[str, int]:
     return execution_times
 
 
-def pipeline_exec_times_multiple(experiments: List[List[Dict]]) -> Dict[str, float]:
+def pipeline_exec_times_multiple(experiments: List[List[Dict]], std=False) -> Dict[str, tuple]:
     """
     Average execution time of each individual pipeline across multiple experiments.
     """
@@ -62,10 +74,12 @@ def pipeline_exec_times_multiple(experiments: List[List[Dict]]) -> Dict[str, flo
                 avg_exec_times[name] = []
             avg_exec_times[name].append(exec_time)
 
-    avg_exec_times = {
-        name: round(sum(times) / len(times), 2)
-        for name, times in avg_exec_times.items()
-    }
+    for name, times in avg_exec_times.items():
+        if std:
+            avg_exec_times[name] = (round(sum(times) / len(times), 2), stddev(times))
+        else:
+            avg_exec_times[name] = round(sum(times) / len(times), 2)
+
     return avg_exec_times
 
 
@@ -87,11 +101,15 @@ def total_wait_time(pipelines: List[Dict]) -> int:
     return sum(wait_times)
 
 
-def total_wait_time_multiple(experiments: List[List[Dict]]) -> float:
+def total_wait_time_multiple(experiments: List[List[Dict]], std=False):
     """
     Average of total waiting time for multiple experiments.
     """
     wait_times = [total_wait_time(pipelines) for pipelines in experiments]
+
+    if std:
+        std_dev = stddev(wait_times)
+        return round(sum(wait_times) / len(wait_times), 2), std_dev
     return round(sum(wait_times) / len(wait_times), 2)
 
 
@@ -113,7 +131,7 @@ def pipeline_wait_times(pipelines: List[Dict]):
     return wait_times
 
 
-def pipeline_wait_times_multiple(experiments: List[List[Dict]]) -> Dict[str, float]:
+def pipeline_wait_times_multiple(experiments: List[List[Dict]], std=False) -> Dict[str, List]:
     """
     Average waiting time of each individual pipeline across multiple experiments.
     """
@@ -124,24 +142,38 @@ def pipeline_wait_times_multiple(experiments: List[List[Dict]]) -> Dict[str, flo
             if name not in avg_wait_times:
                 avg_wait_times[name] = []
             avg_wait_times[name].append(wait_time)
+            
+    for name, times in avg_wait_times.items():
+        if std:
+            avg_wait_times[name] = (round(sum(times) / len(times), 2), stddev(times))
+        else:
+            avg_wait_times[name] = round(sum(times) / len(times), 2)
 
-    avg_wait_times = {
-        name: round(sum(times) / len(times), 2)
-        for name, times in avg_wait_times.items()
-    }
     return avg_wait_times
 
 
-def pipeline_wait_times_avg(pipelines: List[Dict] = None, experiments: List[List[Dict]] = None) -> float:
+def pipeline_wait_times_avg(pipelines: List[Dict]) -> float:
     """
     Overall average waiting time for a pipeline.
     """
-    if pipelines is not None and experiments is None:
-        wait_times = pipeline_wait_times(pipelines)
-    elif experiments is not None and pipelines is None:
-        wait_times = pipeline_wait_times_multiple(experiments)
+    wait_times = pipeline_wait_times(pipelines)
     wait_time_avg = sum(wait_times.values()) / len(wait_times)
     return round(wait_time_avg, 2)
+
+
+def pipeline_wait_times_avg_multiple(experiments: List[List[Dict]], std=False):
+    """
+    Overall average waiting time for a pipeline across multiple experiments.
+    """
+    avgs = []
+    for pipelines in experiments:
+        wait_times = pipeline_wait_times(pipelines)
+        wait_time_avg = sum(wait_times.values()) / len(wait_times)
+        avgs.append(wait_time_avg)
+    avg = round(sum(avgs) / len(avgs), 2)
+    if std:
+        return avg, stddev(avgs)
+    return avg
 
 
 # ====================
@@ -217,26 +249,34 @@ def kfp_total_exec_time(runs) -> float:
     return total_time.total_seconds()
 
 
-def kfp_total_exec_time_multiple(experiments: List[Dict]) -> float:
+def kfp_total_exec_time_multiple(experiments: List[Dict], std=False):
     """
     Average of total execution time for multiple KFP experiments.
     """
     total_times = [kfp_total_exec_time(runs) for runs in experiments]
+
+    if std:
+        std_dev = stddev(total_times)
+        return round(sum(total_times) / len(total_times), 2), std_dev
     return round(sum(total_times) / len(total_times), 2)
 
 
-def kfp_pipeline_exec_times_multiple(all_runs: list) -> dict:
+def kfp_pipeline_exec_times_multiple(experiments: list, std=False) -> dict:
     """
     Average execution time of each individual pipeline across multiple KFP runs.
     """
     pipelines = {}
-    for runs in all_runs:
+    for runs in experiments:
         for pipeline in runs:
             name = pipeline["name"]
             if name not in pipelines:
                 pipelines[name] = []
             pipelines[name].append(pipeline["duration"])
 
-    for name, durations in pipelines.items():
-        pipelines[name] = round(sum(durations) / len(durations) if durations else 0, 2)
+    for name, times in pipelines.items():
+        if std:
+            pipelines[name] = (round(sum(times) / len(times), 2), stddev(times))
+        else:
+            pipelines[name] = round(sum(times) / len(times), 2)
+
     return pipelines

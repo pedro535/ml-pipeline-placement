@@ -14,12 +14,18 @@
         "original": {
             "n_samples": 70000,
             "input_shape": [28, 28, 1],
-            "n_classes": 10
+            "n_classes": 10,
+            "data_types": {
+                "uint8": 784
+            }
         },
         "preprocessed": {
             "n_samples": 70000,
             "input_shape": [28, 28, 1],
-            "n_classes": 10
+            "n_classes": 10,
+            "data_types": {
+                "float64": 784
+            }
         }
     },
     "model": {
