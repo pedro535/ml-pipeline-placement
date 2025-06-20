@@ -127,7 +127,8 @@ class Pipeline:
         """
         if response:
             try:
-                print(response.json())
+                res = response.json()
+                print(json.dumps(res, indent=4))
             except ValueError:
                 print("Failed to parse response JSON")
 
