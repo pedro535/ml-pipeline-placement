@@ -16,7 +16,7 @@ class CustomPlacer(PlacerInterface):
         self.assignments_counts = None   # attr from DecisionUnit
         self.accelerator_score = 3
 
-        with open("placers/custom_heuristics.json", "r") as f:
+        with open("server/placers/custom_heuristics.json", "r") as f:
             self.heuristics = json.load(f)
 
         self.effort_calculators = {

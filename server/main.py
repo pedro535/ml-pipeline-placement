@@ -58,27 +58,15 @@ def handle_root():
     }
 
 
-@app.get("/datasets/")
-def update_datasets():
-    return {
-        "datasets": data_manager.get_datasets()
-    }
-
-
-@app.get("/datasets/update/")
-def update_datasets():
-    data_manager.update_datasets()
+@app.get("/pipelines/{pipeline_id}")
+def get_pipeline(pipeline_id: str):
+    pipeline = pipeline_manager.get_pipeline(pipeline_id)
+    if not pipeline:
+        return {"status": "error", "message": "Pipeline not found"}
+    
     return {
         "status": "success",
-        "message": "Datasets updated successfully",
-    }
-
-
-@app.get("/nodes/")
-def get_nodes():
-    return {
-        "nodes": node_manager.get_nodes(),
-        "assignments": decision_unit.assignments_counts
+        "data": pipeline.dict_repr()
     }
 
 
@@ -123,4 +111,3 @@ async def submit_pipeline(
         "pipeline_id": pipeline_id
     }
     return response
-    

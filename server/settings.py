@@ -1,8 +1,10 @@
+import sys
 import os
 from dotenv import load_dotenv
 from pathlib import Path
 from datetime import datetime
 from dateutil import tz
+from loguru import logger
 
 load_dotenv()
 
@@ -28,3 +30,11 @@ N_PIPELINES_CSV = os.getenv("N_PIPELINES_CSV")
 
 pipelines_dir = Path(PIPELINES_DIR).resolve()
 pipelines_dir.mkdir(parents=True, exist_ok=True)
+
+# Configure logger
+logger.remove()
+logger.add(
+    sys.stderr,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> <level>{level}</level> <cyan>{message}</cyan>",
+    level="INFO"
+)

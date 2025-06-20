@@ -7,7 +7,7 @@ data/kddcup99/kddcup.data_10_percent
 pipelines/**/*.ipynb
 
 # Server outputs
-pipelines_server/
+server/pipelines/
 
 # Others
 tmp/

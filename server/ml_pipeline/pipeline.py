@@ -44,6 +44,9 @@ class Pipeline:
         Return a dictionary representation of the object, excluding metadata and components.
         """
         obj_dict = self.__dict__.copy()
+        obj_dict.pop("effort", None)
+        obj_dict.pop("last_update", None)
+        obj_dict.pop("time_window", None)
         obj_dict.pop("metadata", None)
         obj_dict.pop("components", None)
         obj_dict["components"] = {name: component.dict_repr() for name, component in self.components.items()}

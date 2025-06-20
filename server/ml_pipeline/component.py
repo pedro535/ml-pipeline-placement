@@ -17,4 +17,7 @@ class Component:
         """
         Returns a dictionary representation of the component.
         """
-        return self.__dict__
+        obj_dict = self.__dict__.copy()
+        obj_dict.pop("effort", None)
+        obj_dict.pop("filename", None)
+        return obj_dict

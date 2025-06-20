@@ -43,10 +43,10 @@ To submit a pipeline to the placement system, the pipeline definition file just 
 ## Pipeline Placement System
 The placement system, implemented as a FastAPI application and served by an Uvicorn server, exposes a REST API used by the definition library. This API includes a dedicated submission endpoint that handles POST requests containing the pipeline files.
 
-To locally run the placement system, run the following command from the `server/` directory:
+To run the placement system, run the following command from the root directory of the project:
 
 ```bash
-fastapi dev main
+uvicorn server.main:app  --host 0.0.0.0 --port 8000
 ```
 
 ### Environment Variables

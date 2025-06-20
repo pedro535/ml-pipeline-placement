@@ -5,6 +5,7 @@ import subprocess
 import requests
 import json
 import csv
+from loguru import logger
 
 from server.ml_pipeline import Pipeline, Component
 from server.components import DecisionUnit, NodeManager
@@ -41,6 +42,7 @@ class PipelineManager:
         """
         Register a new pipeline with its components.
         """
+        logger.info(f"New pipeline with ID {pipeline_id}")
         self.submission_queue.put(pipeline_id)
         pipeline = Pipeline(pipeline_id, name)
         
@@ -49,6 +51,13 @@ class PipelineManager:
             pipeline.add_component(component)
 
         self.pipelines[pipeline_id] = pipeline
+
+    
+    def get_pipeline(self, pipeline_id: str) -> Pipeline:
+        """
+        Get a pipeline by its ID.
+        """
+        return self.pipelines.get(pipeline_id)
 
 
     def dump_pipelines(self) -> None:
@@ -68,11 +77,7 @@ class PipelineManager:
         """
         Place and then build the pipelines in the submission queue.
         """
-        # DEBUG
-        print("Assignments")
-        print(json.dumps(self.decision_unit.assignments, indent=4, default=str))
-        print("Nodes avilability")
-        print(json.dumps(self.node_manager.occupation, indent=4, default=str))
+        logger.info("Time window terminated")
 
         if self.submission_queue.empty():
             return
@@ -87,6 +92,7 @@ class PipelineManager:
             pipelines_recv.append(pipeline)
     
         placements = self.decision_unit.get_placements(pipelines_recv)
+        logger.info(f"Total of {len(placements)} pipeline(s) scheduled and placed")
 
         for placement in placements:
             pipeline_id = placement.get("pipeline_id")
@@ -100,6 +106,7 @@ class PipelineManager:
                 pipeline.update_component(c, node=name, platform=platform, effort=efforts.get(c, 0))
 
             self._build_pipeline(pipeline_id, mapping)
+            logger.info(f"Pipeline {pipeline_id} converted to Kubeflow format and compiled")
             self.waiting_list.append(pipeline_id)
 
 
@@ -114,7 +121,7 @@ class PipelineManager:
             if pipeline.kfp_id is None:
                 self._update_kfp_id(pipeline)
             if pipeline.kfp_id is None:
-                print("Kfp id still unavailable for pipeline: ", pipeline_id)
+                logger.info("Kfp id still unavailable for pipeline ", pipeline_id)
                 continue
             
             run_details = kfp_runs.get(pipeline.kfp_id)
@@ -131,16 +138,12 @@ class PipelineManager:
 
             if self.node_manager.nodes_available(nodes_required):
                 self.node_manager.reserve_nodes(nodes_required, pipeline_id)
+                logger.info(f"Pipeline {pipeline_id} triggered for execution")
                 self._run_pipeline(pipeline_id)
                 self.running_pipelines.append(pipeline_id)
                 self.waiting_list.remove(pipeline_id)
 
         self._add_csv_row()
-
-        # DEBUG
-        print("Waiting list: ", self.waiting_list)
-        print("Running pipelines: ", self.running_pipelines)
-        self.print_running_pipelines()
 
 
     def _update_components(self, pipeline_id: str, run_details: Dict) -> None:
@@ -193,7 +196,7 @@ class PipelineManager:
         try:
             subprocess.run(args=args, capture_output=True, cwd=pipelines_dir / pipeline_id)
         except Exception as e:
-            print("Error while building pipeline:", e)
+            logger.error("Error while building pipeline:", e)
             pipeline.update(state="FAILED")
 
 
@@ -204,21 +207,19 @@ class PipelineManager:
         pipeline = self.pipelines[pipeline_id]
 
         try:
-            print("----- Running pipeline: ", pipeline_id)
             run = subprocess.run(
                 args=["python3", pipelines_dir / pipeline_id / f"{KFP_PREFIX}{PIPELINE_FILENAME}"],
                 capture_output=True,
                 cwd=pipelines_dir / pipeline_id
             )
             output = run.stdout.decode("utf-8")
-            print("----- Pipeline output:")
-            print(output)
             if "Run ID:" in output:
                 kfp_id = output.split("Run ID:")[-1].strip()
                 pipeline.update(kfp_id=kfp_id, state="RUNNING")
+                logger.info(f"Pipeline {pipeline_id} started with KFP ID {kfp_id}")
 
         except Exception as e:
-            print("Error while running pipeline:", e)
+            logger.error("Error while running pipeline:", e)
             pipeline.update(state="FAILED")
 
 
@@ -235,7 +236,7 @@ class PipelineManager:
                 if run["display_name"].startswith(name):
                     pipeline.update(kfp_id=run["run_id"])
         except requests.exceptions.RequestException:
-            print("Error fetching runs from KFP API")
+            logger.error("Error fetching runs from KFP API")
 
     
     def _get_kfp_runs(self) -> Dict[str, Dict]:
@@ -249,7 +250,7 @@ class PipelineManager:
             runs_dict = {r["run_id"]: r for r in runs}
             return runs_dict
         except requests.exceptions.RequestException:
-            print("Error fetching runs from KFP API")
+            logger.error("Error fetching runs from KFP API")
             return {}
         
     
@@ -261,7 +262,7 @@ class PipelineManager:
         try:
             requests.delete(url)
         except requests.exceptions.RequestException:
-            print("Error deleting run from KFP API")
+            logger.error("Error deleting run from KFP API")
         
 
     def _add_csv_row(self, new_window: bool = False) -> None:
@@ -272,9 +273,3 @@ class PipelineManager:
         self.csv_writer.writerow([timestamp, "update", len(self.running_pipelines), len(self.waiting_list)])
         if new_window:
             self.csv_writer.writerow([timestamp, "new_window", len(self.running_pipelines), len(self.waiting_list)])
-
-
-    def print_running_pipelines(self) -> None:
-        for pipeline_id in self.running_pipelines:
-            pipeline = self.pipelines[pipeline_id]
-            print(pipeline)
