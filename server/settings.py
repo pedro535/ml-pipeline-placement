@@ -35,6 +35,6 @@ pipelines_dir.mkdir(parents=True, exist_ok=True)
 logger.remove()
 logger.add(
     sys.stderr,
-    format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> <level>{level}</level> <cyan>{message}</cyan>",
+    format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green>  <cyan>{level}</cyan>  {message}",
     level="INFO"
 )

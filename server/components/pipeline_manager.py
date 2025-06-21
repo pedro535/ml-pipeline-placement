@@ -77,8 +77,6 @@ class PipelineManager:
         """
         Place and then build the pipelines in the submission queue.
         """
-        logger.info("Time window terminated")
-
         if self.submission_queue.empty():
             return
         self.time_window += 1
@@ -216,7 +214,7 @@ class PipelineManager:
             if "Run ID:" in output:
                 kfp_id = output.split("Run ID:")[-1].strip()
                 pipeline.update(kfp_id=kfp_id, state="RUNNING")
-                logger.info(f"Pipeline {pipeline_id} started with KFP ID {kfp_id}")
+                logger.info(f"Kubeflow started pipeline {pipeline_id}")
 
         except Exception as e:
             logger.error("Error while running pipeline:", e)
